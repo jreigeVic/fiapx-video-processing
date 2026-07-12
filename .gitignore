@@ -1,0 +1,38 @@
+﻿# IntelliJ
+.idea/
+*.iml
+
+# Gradle
+.gradle/
+build/
+
+# Maven
+target/
+
+# Java
+*.class
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# LocalStack
+.localstack/
+
+# Docker
+*.pid
+
+# OS
+.DS_Store
+Thumbs.db
+
+# AI
+.ai/output/
