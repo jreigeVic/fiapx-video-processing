@@ -13,6 +13,7 @@ Definir os padroes comuns de implementacao dos microsservicos da FIAP X Video Pr
 | HLD 11 - Security | JWT, Spring Security, BCrypt, Secrets, IAM minimo e URLs pre-assinadas. |
 | HLD 12 - Observability | OpenTelemetry, New Relic, CloudWatch, logs, metricas e traces. |
 | HLD 14 - CI-CD | Build, testes, cobertura, SonarQube, Trivy, Docker e deploy. |
+| ADR-011 | Microservice Scaffolding and Naming Conventions | Package naming, project structure, Gradle organization. |
 
 ## Principios Obrigatorios
 
@@ -44,14 +45,15 @@ flowchart TB
 
 ## Organizacao de Pacotes
 
-Padrao recomendado por microsservico:
+Padrao recomendado por microsservico (consultar ADR-011 para detalhes):
 
 ```text
-br.com.fiapx.<service>
+com.fiapx.<service>
   application
     usecase
     port.in
     port.out
+    dto
   domain
     model
     valueobject
@@ -63,6 +65,11 @@ br.com.fiapx.<service>
     adapter.out.storage
     adapter.out.messaging
     config
+  api
+    controller
+    request
+    response
+    mapper
   shared
     error
     observability

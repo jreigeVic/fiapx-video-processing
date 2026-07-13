@@ -4,6 +4,14 @@
 
 Gerenciar o ciclo de vida dos videos enviados pelos usuarios, incluindo upload, persistencia de metadados, publicacao de eventos, consulta de status e disponibilizacao do resultado.
 
+## Rastreabilidade
+
+| Origem | Aplicacao neste LLD |
+|--------|----------------------|
+| HLD 06 - Architecture Overview | Microservico Video. |
+| HLD 09 - Event-Driven Architecture | VideoUploaded, VideoProcessed, VideoFailed. |
+| ADR-011 | Naming conventions and package organization. |
+
 ## Responsabilidades
 
 - Receber solicitacoes de upload.
@@ -80,11 +88,12 @@ flowchart TB
 
 ## Organizacao dos Pacotes
 
+Consultar ADR-011 para detalhes completos.
+
 ```text
-br.com.fiapx.video
+com.fiapx.video
   application.usecase
-  application.port.in
-  application.port.out
+  application.port
   domain.model
   domain.valueobject
   domain.exception
@@ -94,6 +103,10 @@ br.com.fiapx.video
   infrastructure.adapter.out.storage
   infrastructure.adapter.out.messaging
   infrastructure.config
+  api.controller
+  api.request
+  api.response
+  api.mapper
   shared.error
 ```
 

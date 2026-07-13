@@ -1,0 +1,6 @@
+spring:
+  profiles: test
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/auth_db_test
+

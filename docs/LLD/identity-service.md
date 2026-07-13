@@ -28,13 +28,13 @@ Nao pertence ao Identity Service:
 - Processamento de arquivos.
 - Notificacoes de conclusao ou falha.
 
-## Requisitos Atendidos
+## Rastreabilidade
 
-| Requisito | Atendimento |
-|-----------|-------------|
-| RF-01 | Autenticacao de usuarios. |
-| RNF-04 | Seguranca de acesso e senhas. |
-| RNF-08 | Testabilidade por camadas. |
+| Origem | Aplicacao neste LLD |
+|--------|----------------------|
+| HLD 06 - Architecture Overview | Microservico Identity. |
+| HLD 11 - Security | JWT, Spring Security, BCrypt. |
+| ADR-011 | Naming conventions and package organization. |
 
 ## Casos de Uso
 
@@ -66,11 +66,12 @@ flowchart TB
 
 ## Organizacao dos Pacotes
 
+Consultar ADR-011 para detalhes completos.
+
 ```text
-br.com.fiapx.identity
+com.fiapx.identity
   application.usecase
-  application.port.in
-  application.port.out
+  application.port
   domain.model
   domain.valueobject
   domain.exception
@@ -78,6 +79,9 @@ br.com.fiapx.identity
   infrastructure.adapter.out.persistence
   infrastructure.adapter.out.security
   infrastructure.config
+  api.controller
+  api.request
+  api.response
   shared.error
 ```
 

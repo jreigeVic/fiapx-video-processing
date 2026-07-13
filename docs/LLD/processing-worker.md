@@ -4,6 +4,14 @@
 
 Executar o processamento assincrono dos videos, extraindo frames, gerando arquivo ZIP, armazenando o resultado no Amazon S3 e publicando o resultado por eventos.
 
+## Rastreabilidade
+
+| Origem | Aplicacao neste LLD |
+|--------|----------------------|
+| HLD 06 - Architecture Overview | Microservico Processing Worker. |
+| HLD 09 - Event-Driven Architecture | Consumo de VideoUploaded, publicacao de VideoProcessed e VideoFailed. |
+| ADR-011 | Naming conventions and package organization. |
+
 ## Responsabilidades
 
 - Consumir VideoUploaded por SQS.
@@ -75,11 +83,12 @@ flowchart TB
 
 ## Organizacao dos Pacotes
 
+Consultar ADR-011 para detalhes completos.
+
 ```text
-br.com.fiapx.processing
+com.fiapx.processing
   application.usecase
-  application.port.in
-  application.port.out
+  application.port
   domain.model
   domain.valueobject
   domain.exception

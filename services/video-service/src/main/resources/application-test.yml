@@ -1,0 +1,5 @@
+spring:
+  profiles: test
+  datasource:
+    url: jdbc:postgresql://localhost:5432/video_db_test
+

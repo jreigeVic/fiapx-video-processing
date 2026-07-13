@@ -1,0 +1,6 @@
+<configuration>
+  <!-- Minimal logback config: default Spring Boot behavior preserved -->
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <springProfile name=""/>
+</configuration>
+

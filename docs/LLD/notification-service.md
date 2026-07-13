@@ -4,6 +4,14 @@
 
 Consumir eventos de resultado do processamento e enviar notificacoes ao usuario quando o video for processado ou falhar.
 
+## Rastreabilidade
+
+| Origem | Aplicacao neste LLD |
+|--------|----------------------|
+| HLD 06 - Architecture Overview | Microservico Notification. |
+| HLD 09 - Event-Driven Architecture | Consumo de VideoProcessed e VideoFailed. |
+| ADR-011 | Naming conventions and package organization. |
+
 ## Responsabilidades
 
 - Consumir VideoProcessed.
@@ -65,11 +73,12 @@ flowchart TB
 
 ## Organizacao dos Pacotes
 
+Consultar ADR-011 para detalhes completos.
+
 ```text
-br.com.fiapx.notification
+com.fiapx.notification
   application.usecase
-  application.port.in
-  application.port.out
+  application.port
   domain.model
   domain.valueobject
   domain.exception
@@ -78,6 +87,7 @@ br.com.fiapx.notification
   infrastructure.adapter.out.notification
   infrastructure.adapter.out.persistence
   infrastructure.config
+  api.controller
   shared.error
 ```
 
