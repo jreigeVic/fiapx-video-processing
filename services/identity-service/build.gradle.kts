@@ -1,7 +1,10 @@
+import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.java
+import org.gradle.kotlin.dsl.repositories
+
 plugins {
     java
     id("org.springframework.boot") version "3.3.2"
-    id("io.spring.dependency-management") version "1.1.0"
 }
 
 group = "com.fiapx"
