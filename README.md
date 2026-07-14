@@ -1,4 +1,4 @@
-﻿# FIAP X - Cloud Native Video Processing Platform
+# FIAP X - Cloud Native Video Processing Platform
 
 Cloud-native video processing platform developed for the FIAP X Hackathon.
 
