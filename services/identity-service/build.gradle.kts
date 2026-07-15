@@ -1,10 +1,14 @@
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.jacoco
 import org.gradle.kotlin.dsl.java
 import org.gradle.kotlin.dsl.repositories
 
 plugins {
     java
+    jacoco
     id("org.springframework.boot") version "3.3.2"
+    id("io.spring.dependency-management") version "1.1.0"
+    id("org.sonarqube") version "4.4.1.3373"
 }
 
 group = "com.fiapx"
@@ -18,6 +22,16 @@ java {
 
 repositories {
     mavenCentral()
+}
+
+// Fixed platform choice (ADR-010: SonarQube Cloud), not environment-specific
+// configuration: every invocation of the sonar task targets SonarCloud,
+// never a local SonarQube server. Token/organization/project key remain
+// CI-supplied (see ci.yml) since those vary per environment.
+sonarqube {
+    properties {
+        property("sonar.host.url", "https://sonarcloud.io")
+    }
 }
 
 dependencies {
@@ -42,5 +56,14 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
 }
 

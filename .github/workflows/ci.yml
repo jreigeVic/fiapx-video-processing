@@ -1,0 +1,120 @@
+name: CI - Pull Request Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+  push:
+    branches:
+       - main
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  build-test-analyze:
+    name: Build, test and analyze (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - identity-service
+          - notification-service
+          - processing-worker
+          - video-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # Pinned to the same Gradle version declared in every service's
+      # gradle-wrapper.properties (8.8 — required for Spring Boot Gradle
+      # plugin 3.3.2 compatibility). Every service now commits its own
+      # wrapper jar and gradlew script, so this is a consistency guard
+      # rather than a fallback for a missing wrapper.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.8'
+
+      - name: Resolve Gradle command
+        working-directory: services/${{ matrix.service }}
+        shell: bash
+        run: |
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+            echo "GRADLE_CMD=./gradlew" >> "$GITHUB_ENV"
+          else
+            echo "GRADLE_CMD=gradle" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build and run unit tests
+        working-directory: services/${{ matrix.service }}
+        run: $GRADLE_CMD build
+
+      - name: Generate JaCoCo coverage report
+        working-directory: services/${{ matrix.service }}
+        run: $GRADLE_CMD jacocoTestReport
+
+      - name: Upload JaCoCo report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-${{ matrix.service }}
+          path: services/${{ matrix.service }}/build/reports/jacoco/test/jacocoTestReport.xml
+          if-no-files-found: warn
+
+      # SonarCloud project key convention: <SONAR_PROJECT_KEY>-<service-name>.
+      # One SonarCloud project per microservice, sharing a single organization.
+      # Skipped (not failed) when SONAR_TOKEN isn't configured yet.
+      - name: SonarCloud analysis
+        working-directory: services/${{ matrix.service }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+        run: |
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "SONAR_TOKEN not configured, skipping SonarCloud analysis."
+            exit 0
+          fi
+          $GRADLE_CMD sonar \
+            -Dsonar.token="$SONAR_TOKEN" \
+            -Dsonar.organization="$SONAR_ORGANIZATION" \
+            -Dsonar.projectKey="${SONAR_PROJECT_KEY}-${{ matrix.service }}"
+
+      - name: Build Docker image
+        run: docker build -t fiapx/${{ matrix.service }}:ci -f services/${{ matrix.service }}/Dockerfile services/${{ matrix.service }}
+
+      # Preparation only: results are reported to the Security tab, the scan
+      # never fails the build. Enforcement/gating is a future decision.
+      - name: Trivy vulnerability scan (preparation)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: fiapx/${{ matrix.service }}:ci
+          format: sarif
+          output: trivy-${{ matrix.service }}.sarif
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
+      - name: Upload Trivy results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.service }}.sarif
+          category: trivy-${{ matrix.service }}

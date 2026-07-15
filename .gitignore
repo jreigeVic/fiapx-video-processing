@@ -41,3 +41,6 @@ Thumbs.db
 
 # Environment template (not a secret)
 !.env.example
+
+# GitHub configuration (workflows, PR template, CODEOWNERS)
+!.github/
