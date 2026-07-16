@@ -1,6 +1,6 @@
-build/
+build/*
+!build/libs/
 .gradle/
 **/node_modules
 **/*.log
 /.git
-

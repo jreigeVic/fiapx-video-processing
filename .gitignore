@@ -38,3 +38,9 @@ Thumbs.db
 .ai/output/
 .ai
 .*
+
+# Environment template (not a secret)
+!.env.example
+
+# GitHub configuration (workflows, PR template, CODEOWNERS)
+!.github/
