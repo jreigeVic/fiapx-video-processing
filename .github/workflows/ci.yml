@@ -103,8 +103,8 @@ jobs:
 
       # Preparation only: results are reported to the Security tab, the scan
       # never fails the build. Enforcement/gating is a future decision.
-      - name: Trivy vulnerability scan (preparation)
-        uses: aquasecurity/trivy-action@0.24.0
+      - name: Aqua Security Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: fiapx/${{ matrix.service }}:ci
           format: sarif
