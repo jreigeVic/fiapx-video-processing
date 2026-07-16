@@ -80,7 +80,7 @@ jobs:
 
       # SonarCloud project key convention: <SONAR_PROJECT_KEY>-<service-name>.
       # One SonarCloud project per microservice, sharing a single organization.
-      # Skipped (not failed) when SONAR_TOKEN isn't configured yet.
+      # Skipped (not failed) when any of the three secrets isn't configured yet.
       - name: SonarCloud analysis
         working-directory: services/${{ matrix.service }}
         env:
@@ -89,8 +89,8 @@ jobs:
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
         run: |
-          if [ -z "$SONAR_TOKEN" ]; then
-            echo "SONAR_TOKEN not configured, skipping SonarCloud analysis."
+          if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_ORGANIZATION" ] || [ -z "$SONAR_PROJECT_KEY" ]; then
+            echo "SONAR_TOKEN, SONAR_ORGANIZATION or SONAR_PROJECT_KEY not configured, skipping SonarCloud analysis."
             exit 0
           fi
           $GRADLE_CMD sonar \
