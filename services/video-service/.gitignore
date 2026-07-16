@@ -4,6 +4,9 @@ build/
 *.jar
 .idea/
 *.iml
-out/
+/out/
 .DS_Store
+
+# Gradle wrapper jar must be committed for reproducible builds
+!gradle/wrapper/gradle-wrapper.jar
 
