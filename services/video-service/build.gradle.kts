@@ -8,6 +8,7 @@ plugins {
     id("org.sonarqube") version "4.4.1.3373"
     id("com.github.ben-manes.versions") version "0.51.0"
     id("com.diffplug.spotless") version "6.25.0"
+    id("org.owasp.dependencycheck") version "12.2.2"
 }
 
 group = "com.fiapx"
@@ -129,3 +130,20 @@ tasks.named<Pmd>("pmdTest") {
     ruleSetFiles = files("config/pmd/pmd-test-ruleset.xml")
 }
 
+
+// Software Composition Analysis (OWASP Dependency-Check). A standalone,
+// report-only task - never wired into check/build - run explicitly by CI
+// (see ci.yml) only when NVD_API_KEY is configured, since the NVD feed is
+// severely rate-limited without a key and would otherwise make the step's
+// duration unpredictable.
+dependencyCheck {
+    formats = listOf("HTML", "JSON")
+    failBuildOnCVSS = 11.0f
+    data {
+        directory = "${layout.buildDirectory.get()}/dependency-check-data"
+    }
+    nvd {
+        apiKey = System.getenv("NVD_API_KEY") ?: ""
+        delay = 3500
+    }
+}

@@ -40,6 +40,8 @@ jobs:
   build-test-analyze:
     name: Build, test and analyze (${{ matrix.service }})
     runs-on: ubuntu-latest
+    env:
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
     strategy:
       fail-fast: false
       matrix:
@@ -128,6 +130,34 @@ jobs:
         with:
           name: dependency-updates-${{ matrix.service }}
           path: services/${{ matrix.service }}/build/dependencyUpdates/report.txt
+          if-no-files-found: warn
+
+      # Report-only Software Composition Analysis (OWASP Dependency-Check).
+      # Skipped (not failed) when NVD_API_KEY isn't configured: without a
+      # key the NVD feed is severely rate-limited, which would make this
+      # step's duration unpredictable and risk inflating pipeline time.
+      # Caches the NVD vulnerability database across runs to keep the
+      # (keyed) case fast too.
+      - name: Cache OWASP Dependency-Check NVD database
+        if: env.NVD_API_KEY != ''
+        uses: actions/cache@v4
+        with:
+          path: services/${{ matrix.service }}/build/dependency-check-data
+          key: owasp-dep-check-nvd-${{ matrix.service }}-${{ github.run_id }}
+          restore-keys: |
+            owasp-dep-check-nvd-${{ matrix.service }}-
+
+      - name: OWASP Dependency-Check (report only)
+        if: env.NVD_API_KEY != ''
+        working-directory: services/${{ matrix.service }}
+        run: $GRADLE_CMD dependencyCheckAnalyze
+
+      - name: Upload OWASP Dependency-Check report
+        if: always() && env.NVD_API_KEY != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-${{ matrix.service }}
+          path: services/${{ matrix.service }}/build/reports/dependency-check-report.html
           if-no-files-found: warn
 
       # SonarCloud project key convention: <SONAR_PROJECT_KEY>-<service-name>.
