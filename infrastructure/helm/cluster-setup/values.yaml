@@ -26,5 +26,12 @@ db:
 jwt:
   secret: "REPLACE_WITH_JWT_SECRET"
 
+# Scaffolded now (Epic 009) so the Secret exists ahead of time; the actual
+# key is only obtained and wired into the 4 services' OTEL_EXPORTER_OTLP_HEADERS
+# in Epic 016 (Observability). Left blank until then - no New Relic account
+# exists yet.
+newRelic:
+  licenseKey: ""
+
 dbBootstrapJob:
   image: postgres:16
