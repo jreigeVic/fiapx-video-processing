@@ -17,16 +17,25 @@ import com.fiapx.video.domain.exception.InvalidUploadException;
 import com.fiapx.video.domain.model.Video;
 import com.fiapx.video.domain.model.VideoStatus;
 import java.io.ByteArrayInputStream;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class UploadVideoUseCaseTest {
 
+    private static final long MAX_FILE_SIZE_BYTES = 104_857_600; // 100MB
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("video/mp4", "video/quicktime");
+
     private final VideoRepositoryPort videoRepositoryPort = mock(VideoRepositoryPort.class);
     private final StoragePort storagePort = mock(StoragePort.class);
     private final EventPublisherPort eventPublisherPort = mock(EventPublisherPort.class);
     private final UploadVideoUseCase useCase =
-            new UploadVideoUseCase(videoRepositoryPort, storagePort, eventPublisherPort);
+            new UploadVideoUseCase(
+                    videoRepositoryPort,
+                    storagePort,
+                    eventPublisherPort,
+                    MAX_FILE_SIZE_BYTES,
+                    ALLOWED_CONTENT_TYPES);
 
     @Test
     void uploadsFileAndPublishesEvent() {
@@ -67,6 +76,32 @@ class UploadVideoUseCaseTest {
     @Test
     void rejectsNullFile() {
         assertThatThrownBy(() -> useCase.execute(UUID.randomUUID(), "owner@user.com", null))
+                .isInstanceOf(InvalidUploadException.class);
+    }
+
+    @Test
+    void rejectsFileLargerThanMaxSize() {
+        UploadedFile file =
+                new UploadedFile(
+                        "movie.mp4",
+                        "video/mp4",
+                        MAX_FILE_SIZE_BYTES + 1,
+                        new ByteArrayInputStream(new byte[] {1}));
+
+        assertThatThrownBy(() -> useCase.execute(UUID.randomUUID(), "owner@user.com", file))
+                .isInstanceOf(InvalidUploadException.class);
+    }
+
+    @Test
+    void rejectsUnsupportedContentType() {
+        UploadedFile file =
+                new UploadedFile(
+                        "document.pdf",
+                        "application/pdf",
+                        10,
+                        new ByteArrayInputStream(new byte[] {1, 2, 3}));
+
+        assertThatThrownBy(() -> useCase.execute(UUID.randomUUID(), "owner@user.com", file))
                 .isInstanceOf(InvalidUploadException.class);
     }
 }
