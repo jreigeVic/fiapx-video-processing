@@ -79,7 +79,7 @@ POSTGRES_MULTIPLE_DATABASES=auth_db,video_db,notification_db
 
 This keeps the initialization script generic and reusable: adding a database for a future microservice only requires appending its name to `POSTGRES_MULTIPLE_DATABASES` in `.env` — the script itself never needs to change. This scales cleanly as the number of microservices grows, compared to maintaining a separate SQL file per service or hardcoding names in the script.
 
-> Note: the databases above use the names already present in each service's `application.yml` (`auth_db`, `video_db`, `notification_db`). This differs from the example database names in ADR-011 (`identity_db`); the existing service configuration was treated as the source of truth so the local environment stays consistent with the running code. Reconciling ADR-011 is outside the scope of this task.
+> Note: the databases above use the names already present in each service's `application.yml` (`auth_db`, `video_db`, `notification_db`), matching ADR-012's naming examples.
 
 ### LocalStack
 
