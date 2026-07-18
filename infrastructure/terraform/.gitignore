@@ -1,0 +1,9 @@
+# Local state (no remote backend in the lab - see infrastructure/README.md)
+*.tfstate
+*.tfstate.*
+.terraform/
+crash.log
+
+# Real variable values (emails); only the example is committed
+*.tfvars
+!*.tfvars.example
