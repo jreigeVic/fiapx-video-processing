@@ -1,0 +1,61 @@
+# Defaults shared by every service. Each service overrides only what
+# differs, in its own values-<service>.yaml (image, port, probes, env).
+
+nameOverride: ""
+
+image:
+  repository: ""
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+containerPort: 8080
+
+# No Ingress Controller: AWS Load Balancer Controller needs IRSA, which is
+# blocked in AWS Academy (no OIDC provider, no custom IAM roles). A native
+# Service type=LoadBalancer provisions a classic ELB through the in-tree
+# EKS cloud provider, using only the node's LabRole - no extra controller.
+service:
+  enabled: true
+  type: ClusterIP
+  port: 80
+
+# probes.http=true -> httpGet /actuator/health (identity-service, video-service).
+# probes.http=false -> exec pgrep, matching docker-compose.yml's healthcheck
+# for the two SQS-polling workers that have no embedded HTTP server.
+probes:
+  http: true
+  path: /actuator/health
+  processMatch: app.jar
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 10
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 768Mi
+
+# Requires metrics-server on the cluster (not an EKS default) - see
+# infrastructure/helm/README.md prerequisites.
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+# envFrom: [{configMapRef: fiapx-config}, {secretRef: fiapx-shared-secrets}]
+envFrom: []
+
+# env: [{name: FOO, value: "bar"}]
+env: []
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

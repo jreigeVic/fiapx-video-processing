@@ -24,6 +24,9 @@ target/
 *.tfstate
 *.tfstate.*
 
+# Helm (values generated from terraform output - contains RDS/JWT secrets)
+infrastructure/helm/generated/
+
 # LocalStack
 .localstack/
 
