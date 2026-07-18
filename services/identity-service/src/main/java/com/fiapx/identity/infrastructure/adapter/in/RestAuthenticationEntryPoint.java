@@ -1,7 +1,7 @@
 package com.fiapx.identity.infrastructure.adapter.in;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fiapx.identity.api.response.ErrorResponse;
+import com.fiapx.identity.application.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;

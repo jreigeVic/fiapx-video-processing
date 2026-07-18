@@ -1,4 +1,4 @@
-package com.fiapx.identity.api.response;
+package com.fiapx.identity.application.dto;
 
 import java.time.Instant;
 

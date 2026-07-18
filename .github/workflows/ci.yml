@@ -18,6 +18,25 @@ permissions:
   security-events: write
 
 jobs:
+  # Lints the shared OpenAPI contract once (not per-service - it's a single
+  # file covering Identity and Video). Fast (~15-20s) and fails the build on
+  # a broken/invalid spec, catching contract mistakes before they reach a
+  # service implementation.
+  openapi-lint:
+    name: Lint OpenAPI contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Lint docs/api/openapi.yaml (Redocly)
+        run: npx --yes @redocly/cli@1.25.0 lint docs/api/openapi.yaml
+
   build-test-analyze:
     name: Build, test and analyze (${{ matrix.service }})
     runs-on: ubuntu-latest
@@ -62,6 +81,9 @@ jobs:
             echo "GRADLE_CMD=gradle" >> "$GITHUB_ENV"
           fi
 
+      # `build` runs `check`, which now also runs the ArchUnit architecture
+      # tests (src/test/.../architecture) as plain JUnit 5 tests - no
+      # separate pipeline step needed for them.
       - name: Build and run unit tests
         working-directory: services/${{ matrix.service }}
         run: $GRADLE_CMD build
@@ -76,6 +98,21 @@ jobs:
         with:
           name: jacoco-${{ matrix.service }}
           path: services/${{ matrix.service }}/build/reports/jacoco/test/jacocoTestReport.xml
+          if-no-files-found: warn
+
+      # Report-only (com.github.ben-manes.versions): lists outdated
+      # dependencies, never updates anything and never fails the build.
+      # Prioritizing LTS is a human decision made from this report.
+      - name: Check for outdated dependencies (report only)
+        working-directory: services/${{ matrix.service }}
+        run: $GRADLE_CMD dependencyUpdates
+
+      - name: Upload dependency freshness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-updates-${{ matrix.service }}
+          path: services/${{ matrix.service }}/build/dependencyUpdates/report.txt
           if-no-files-found: warn
 
       # SonarCloud project key convention: <SONAR_PROJECT_KEY>-<service-name>.

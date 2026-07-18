@@ -1,6 +1,6 @@
 package com.fiapx.identity.api.controller;
 
-import com.fiapx.identity.api.response.ErrorResponse;
+import com.fiapx.identity.application.dto.ErrorResponse;
 import com.fiapx.identity.domain.exception.DomainException;
 import com.fiapx.identity.domain.exception.EmailAlreadyRegisteredException;
 import jakarta.servlet.http.HttpServletRequest;
