@@ -28,7 +28,9 @@ public class SecurityConfig {
                         handling -> handling.authenticationEntryPoint(restAuthenticationEntryPoint))
                 .authorizeHttpRequests(
                         auth ->
-                                auth.requestMatchers(
+                                auth.requestMatchers("/actuator/health")
+                                        .permitAll()
+                                        .requestMatchers(
                                                 HttpMethod.POST,
                                                 "/api/auth/register",
                                                 "/api/auth/login",
