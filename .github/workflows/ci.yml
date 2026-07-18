@@ -275,7 +275,32 @@ jobs:
 
       - name: Show container logs on failure
         if: failure()
-        run: docker compose logs
+        run: docker compose logs --no-color
+
+      # Dumps the actual last-run healthcheck output (docker's own probe,
+      # not a re-derived guess) plus a manual in-container probe, since the
+      # app container logs alone haven't been enough to diagnose prior
+      # failures of this job.
+      - name: Diagnose unhealthy containers on failure
+        if: failure()
+        run: |
+          declare -A ports=(
+            [fiapx-identity-service]=8081
+            [fiapx-video-service]=8082
+            [fiapx-processing-worker]=8083
+            [fiapx-notification-service]=8084
+          )
+          for c in "${!ports[@]}"; do
+            echo "=== $c: docker's own healthcheck history ==="
+            docker inspect --format='{{json .State.Health}}' "$c" || true
+            echo
+            echo "=== $c: process list ==="
+            docker exec "$c" ps aux || true
+            echo
+            echo "=== $c: manual wget probe ==="
+            docker exec "$c" wget -O- "http://localhost:${ports[$c]}/actuator/health" || true
+            echo
+          done
 
       - name: Tear down the stack
         if: always()
