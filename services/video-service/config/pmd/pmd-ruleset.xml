@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<ruleset name="fiapx-identity"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>
+        Complexity, dead-code and bug-pattern gate. Excludes PMD's
+        `documentation` category (Javadoc requirements conflict with this
+        project's no-comments-unless-needed convention) and `codestyle`
+        category (already covered by Spotless/Checkstyle) to avoid
+        triple-reporting the same finding.
+    </description>
+
+    <rule ref="category/java/bestpractices.xml">
+        <!-- Spring @Bean factory methods commonly return interfaces/have
+             unused constructor parameters injected by the container. -->
+        <exclude name="GuardLogStatement"/>
+    </rule>
+    <rule ref="category/java/design.xml">
+        <!-- Fires on ordinary getter chains (e.g. user.getEmail()) in
+             mappers/adapters - too strict for this layered architecture,
+             where crossing a layer boundary via one accessor call is the
+             normal, intended shape. -->
+        <exclude name="LawOfDemeter"/>
+        <!-- Fires on JPA entities, config-properties classes and value
+             objects, which are supposed to be data-holders by design in
+             this architecture (see docs/LLD/shared-architecture.md). -->
+        <exclude name="DataClass"/>
+        <!-- Spring Security's HttpSecurity#build() itself declares
+             `throws Exception`; every SecurityFilterChain @Bean method
+             must propagate it. -->
+        <exclude name="SignatureDeclareThrowsException"/>
+    </rule>
+    <rule ref="category/java/errorprone.xml">
+        <!-- Java records intentionally have no explicit constructor. -->
+        <exclude name="MissingSerialVersionUID"/>
+        <!-- Deliberate record-like VO convention: field `value`, accessor
+             `value()`, matching Java's own record accessor naming. -->
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
+    </rule>
+    <rule ref="category/java/multithreading.xml"/>
+    <rule ref="category/java/performance.xml"/>
+    <rule ref="category/java/security.xml"/>
+</ruleset>

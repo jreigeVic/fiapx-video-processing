@@ -21,11 +21,12 @@ public class AuthenticateUserUseCase {
     private final RefreshTokenRepositoryPort refreshTokenRepositoryPort;
     private final Duration refreshTokenTimeToLive;
 
-    public AuthenticateUserUseCase(UserRepositoryPort userRepositoryPort,
-                                    PasswordEncoderPort passwordEncoderPort,
-                                    TokenProviderPort tokenProviderPort,
-                                    RefreshTokenRepositoryPort refreshTokenRepositoryPort,
-                                    Duration refreshTokenTimeToLive) {
+    public AuthenticateUserUseCase(
+            UserRepositoryPort userRepositoryPort,
+            PasswordEncoderPort passwordEncoderPort,
+            TokenProviderPort tokenProviderPort,
+            RefreshTokenRepositoryPort refreshTokenRepositoryPort,
+            Duration refreshTokenTimeToLive) {
         this.userRepositoryPort = userRepositoryPort;
         this.passwordEncoderPort = passwordEncoderPort;
         this.tokenProviderPort = tokenProviderPort;
@@ -35,8 +36,8 @@ public class AuthenticateUserUseCase {
 
     public AuthResult execute(String rawEmail, String rawPassword) {
         Email email = Email.of(rawEmail);
-        User user = userRepositoryPort.findByEmail(email)
-                .orElseThrow(InvalidCredentialsException::new);
+        User user =
+                userRepositoryPort.findByEmail(email).orElseThrow(InvalidCredentialsException::new);
 
         if (!passwordEncoderPort.matches(rawPassword, user.getPasswordHash())) {
             throw new InvalidCredentialsException();

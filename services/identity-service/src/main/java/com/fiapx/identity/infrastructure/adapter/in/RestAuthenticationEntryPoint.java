@@ -15,14 +15,18 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+    public void commence(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AuthenticationException authException)
             throws IOException {
-        ErrorResponse body = new ErrorResponse(
-                Instant.now(),
-                HttpServletResponse.SC_UNAUTHORIZED,
-                "UNAUTHORIZED",
-                "Missing or invalid token",
-                request.getRequestURI());
+        ErrorResponse body =
+                new ErrorResponse(
+                        Instant.now(),
+                        HttpServletResponse.SC_UNAUTHORIZED,
+                        "UNAUTHORIZED",
+                        "Missing or invalid token",
+                        request.getRequestURI());
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(response.getWriter(), body);

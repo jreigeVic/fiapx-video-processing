@@ -16,19 +16,20 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
- * Runs the real Flyway migration (V001) against Postgres 16 to validate the
- * hexagonal persistence adapter end to end, per docs/LLD/identity-service.md's
- * testing strategy. Requires a running Docker daemon.
+ * Runs the real Flyway migration (V001) against Postgres 16 to validate the hexagonal persistence
+ * adapter end to end, per docs/LLD/identity-service.md's testing strategy. Requires a running
+ * Docker daemon.
  */
 @SpringBootTest
 @Testcontainers
 class JpaUserRepositoryAdapterIntegrationTest {
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16")
-            .withDatabaseName("auth_db")
-            .withUsername("test")
-            .withPassword("test");
+    static PostgreSQLContainer<?> postgres =
+            new PostgreSQLContainer<>("postgres:16")
+                    .withDatabaseName("auth_db")
+                    .withUsername("test")
+                    .withPassword("test");
 
     @DynamicPropertySource
     static void datasourceProperties(DynamicPropertyRegistry registry) {
@@ -37,8 +38,7 @@ class JpaUserRepositoryAdapterIntegrationTest {
         registry.add("spring.datasource.password", postgres::getPassword);
     }
 
-    @Autowired
-    private UserRepositoryPort userRepositoryPort;
+    @Autowired private UserRepositoryPort userRepositoryPort;
 
     @Test
     void persistsAndRetrievesUserByEmail() {

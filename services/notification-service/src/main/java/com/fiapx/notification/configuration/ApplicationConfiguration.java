@@ -6,4 +6,3 @@ import org.springframework.context.annotation.Configuration;
 public class ApplicationConfiguration {
     // Placeholder configuration for Notification Service
 }
-

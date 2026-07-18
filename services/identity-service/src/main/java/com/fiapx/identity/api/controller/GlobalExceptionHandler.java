@@ -15,31 +15,39 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EmailAlreadyRegisteredException.class)
-    public ResponseEntity<ErrorResponse> handleConflict(EmailAlreadyRegisteredException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleConflict(
+            EmailAlreadyRegisteredException ex, HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, "CONFLICT", ex.getMessage(), request);
     }
 
     @ExceptionHandler(DomainException.class)
-    public ResponseEntity<ErrorResponse> handleUnauthorized(DomainException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleUnauthorized(
+            DomainException ex, HttpServletRequest request) {
         return build(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", ex.getMessage(), request);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(IllegalArgumentException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleValidation(
+            IllegalArgumentException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", ex.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleBeanValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
-        String message = ex.getBindingResult().getFieldErrors().stream()
-                .findFirst()
-                .map(error -> error.getField() + " " + error.getDefaultMessage())
-                .orElse("Invalid request");
+    public ResponseEntity<ErrorResponse> handleBeanValidation(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+        String message =
+                ex.getBindingResult().getFieldErrors().stream()
+                        .findFirst()
+                        .map(error -> error.getField() + " " + error.getDefaultMessage())
+                        .orElse("Invalid request");
         return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", message, request);
     }
 
-    private ResponseEntity<ErrorResponse> build(HttpStatus status, String error, String message, HttpServletRequest request) {
-        ErrorResponse body = new ErrorResponse(Instant.now(), status.value(), error, message, request.getRequestURI());
+    private ResponseEntity<ErrorResponse> build(
+            HttpStatus status, String error, String message, HttpServletRequest request) {
+        ErrorResponse body =
+                new ErrorResponse(
+                        Instant.now(), status.value(), error, message, request.getRequestURI());
         return ResponseEntity.status(status).body(body);
     }
 }

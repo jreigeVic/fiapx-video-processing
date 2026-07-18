@@ -14,7 +14,8 @@ public class GetAuthenticatedUserUseCase {
     }
 
     public User execute(UUID authenticatedUserId) {
-        return userRepositoryPort.findById(authenticatedUserId)
+        return userRepositoryPort
+                .findById(authenticatedUserId)
                 .orElseThrow(InvalidCredentialsException::new);
     }
 }

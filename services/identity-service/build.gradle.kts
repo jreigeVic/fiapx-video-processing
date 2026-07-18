@@ -6,10 +6,13 @@ import org.gradle.kotlin.dsl.repositories
 plugins {
     java
     jacoco
+    checkstyle
+    pmd
     id("org.springframework.boot") version "3.3.2"
     id("io.spring.dependency-management") version "1.1.0"
     id("org.sonarqube") version "4.4.1.3373"
     id("com.github.ben-manes.versions") version "0.51.0"
+    id("com.diffplug.spotless") version "6.25.0"
 }
 
 group = "com.fiapx"
@@ -87,5 +90,42 @@ tasks.named<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask>("
     rejectVersionIf {
         isNonStable(candidate.version) && !isNonStable(currentVersion)
     }
+}
+
+// Formatting gate (Spotless). AOSP variant of google-java-format keeps the
+// 4-space indentation already used across the codebase, minimizing diff
+// churn versus the 2-space Google default. Wired into `check` by default.
+spotless {
+    java {
+        target("src/**/*.java")
+        googleJavaFormat("1.22.0").aosp()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+// Convention gate (Checkstyle): imports, naming, basic hygiene. Ruleset at
+// config/checkstyle/checkstyle.xml. Wired into `check` by default.
+checkstyle {
+    toolVersion = "10.17.0"
+    maxWarnings = 0
+}
+
+// Complexity/dead-code/bug-pattern gate (PMD). Deliberately excludes PMD's
+// `documentation` category (would demand Javadoc, conflicting with this
+// project's no-comments-unless-needed convention) and `codestyle` category
+// (already covered by Spotless/Checkstyle) to avoid triple-reporting the
+// same finding. Wired into `check` by default.
+pmd {
+    toolVersion = "7.0.0"
+    ruleSets = listOf()
+    ruleSetFiles = files("config/pmd/pmd-ruleset.xml")
+}
+
+// Test sources use a lighter ruleset (config/pmd/pmd-test-ruleset.xml) -
+// see that file's <description> for why.
+tasks.named<Pmd>("pmdTest") {
+    ruleSetFiles = files("config/pmd/pmd-test-ruleset.xml")
 }
 

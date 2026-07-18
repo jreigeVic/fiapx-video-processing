@@ -19,10 +19,11 @@ public class RefreshTokenUseCase {
     private final RefreshTokenRepositoryPort refreshTokenRepositoryPort;
     private final Duration refreshTokenTimeToLive;
 
-    public RefreshTokenUseCase(UserRepositoryPort userRepositoryPort,
-                                TokenProviderPort tokenProviderPort,
-                                RefreshTokenRepositoryPort refreshTokenRepositoryPort,
-                                Duration refreshTokenTimeToLive) {
+    public RefreshTokenUseCase(
+            UserRepositoryPort userRepositoryPort,
+            TokenProviderPort tokenProviderPort,
+            RefreshTokenRepositoryPort refreshTokenRepositoryPort,
+            Duration refreshTokenTimeToLive) {
         this.userRepositoryPort = userRepositoryPort;
         this.tokenProviderPort = tokenProviderPort;
         this.refreshTokenRepositoryPort = refreshTokenRepositoryPort;
@@ -31,8 +32,10 @@ public class RefreshTokenUseCase {
 
     public AuthResult execute(String rawRefreshToken) {
         String tokenHash = RefreshToken.hash(rawRefreshToken);
-        RefreshToken existing = refreshTokenRepositoryPort.findByTokenHash(tokenHash)
-                .orElseThrow(InvalidRefreshTokenException::new);
+        RefreshToken existing =
+                refreshTokenRepositoryPort
+                        .findByTokenHash(tokenHash)
+                        .orElseThrow(InvalidRefreshTokenException::new);
 
         if (!existing.isValid(Instant.now())) {
             throw new InvalidRefreshTokenException();
@@ -41,8 +44,10 @@ public class RefreshTokenUseCase {
         existing.revoke();
         refreshTokenRepositoryPort.save(existing);
 
-        User user = userRepositoryPort.findById(existing.getUserId())
-                .orElseThrow(InvalidRefreshTokenException::new);
+        User user =
+                userRepositoryPort
+                        .findById(existing.getUserId())
+                        .orElseThrow(InvalidRefreshTokenException::new);
 
         AccessToken accessToken = tokenProviderPort.generateAccessToken(user);
         IssuedRefreshToken issued = RefreshToken.issue(user.getId(), refreshTokenTimeToLive);

@@ -13,4 +13,3 @@ class ApplicationUnitTest {
         // Application context load smoke test for scaffold
     }
 }
-

@@ -11,38 +11,58 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
 /**
- * Enforces the Hexagonal Architecture boundaries described in
- * docs/LLD/shared-architecture.md and docs/LLD/notification-service.md.
- * Fails the build (via the normal {@code test} task) on violation.
+ * Enforces the Hexagonal Architecture boundaries described in docs/LLD/shared-architecture.md and
+ * docs/LLD/notification-service.md. Fails the build (via the normal {@code test} task) on
+ * violation.
  */
 @AnalyzeClasses(packages = "com.fiapx.notification")
 class HexagonalArchitectureTest {
 
     @ArchTest
     static final ArchRule domain_should_not_depend_on_spring =
-            noClasses().that().resideInAPackage("..domain..")
-                    .should().dependOnClassesThat().resideInAnyPackage("org.springframework..");
+            noClasses()
+                    .that()
+                    .resideInAPackage("..domain..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAnyPackage("org.springframework..");
 
     @ArchTest
     static final ArchRule domain_should_not_depend_on_jpa =
-            noClasses().that().resideInAPackage("..domain..")
-                    .should().dependOnClassesThat().resideInAnyPackage("jakarta.persistence..", "org.hibernate..");
+            noClasses()
+                    .that()
+                    .resideInAPackage("..domain..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAnyPackage("jakarta.persistence..", "org.hibernate..");
 
     @ArchTest
     static final ArchRule domain_should_not_depend_on_dtos =
-            noClasses().that().resideInAPackage("..domain..")
-                    .should().dependOnClassesThat().resideInAnyPackage(
+            noClasses()
+                    .that()
+                    .resideInAPackage("..domain..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAnyPackage(
                             "..application.dto..", "..api.request..", "..api.response..");
 
     @ArchTest
     static final ArchRule application_should_not_depend_on_infrastructure =
-            noClasses().that().resideInAPackage("..application..")
-                    .should().dependOnClassesThat().resideInAPackage("..infrastructure..");
+            noClasses()
+                    .that()
+                    .resideInAPackage("..application..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAPackage("..infrastructure..");
 
     @ArchTest
     static final ArchRule controllers_should_not_access_repositories_or_adapters_directly =
-            noClasses().that().resideInAPackage("..api.controller..")
-                    .should().dependOnClassesThat().resideInAnyPackage(
+            noClasses()
+                    .that()
+                    .resideInAPackage("..api.controller..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAnyPackage(
                             "..infrastructure.repository..", "..infrastructure.adapter.out..")
                     .allowEmptyShould(true);
 
@@ -51,18 +71,27 @@ class HexagonalArchitectureTest {
     // entire job is wiring adapters to ports.
     @ArchTest
     static final ArchRule only_infrastructure_or_wiring_may_use_jpa_repositories =
-            noClasses().that().resideOutsideOfPackage("..infrastructure..")
-                    .and().resideOutsideOfPackage("..configuration..")
-                    .should().dependOnClassesThat().resideInAPackage("..infrastructure.repository..");
+            noClasses()
+                    .that()
+                    .resideOutsideOfPackage("..infrastructure..")
+                    .and()
+                    .resideOutsideOfPackage("..configuration..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAPackage("..infrastructure.repository..");
 
     // Excludes the scaffold's PackageMarker classes - placeholders used only
     // to keep otherwise-empty package directories tracked by git, not real adapters.
     @ArchTest
     static final ArchRule outbound_adapters_should_implement_a_port =
-            classes().that().resideInAPackage("..infrastructure.adapter.out..")
-                    .and().areNotInterfaces()
+            classes()
+                    .that()
+                    .resideInAPackage("..infrastructure.adapter.out..")
+                    .and()
+                    .areNotInterfaces()
                     .and(not(JavaClass.Predicates.simpleName("PackageMarker")))
-                    .should().implement(JavaClass.Predicates.resideInAPackage("..application.ports.out.."))
+                    .should()
+                    .implement(JavaClass.Predicates.resideInAPackage("..application.ports.out.."))
                     .allowEmptyShould(true);
 
     // "Configuration" is the Spring composition root: it wires concrete
@@ -72,14 +101,25 @@ class HexagonalArchitectureTest {
     static final ArchRule dependencies_should_point_inward =
             layeredArchitecture()
                     .consideringOnlyDependenciesInLayers()
-                    .layer("Domain").definedBy("..domain..")
-                    .layer("Application").definedBy("..application..")
-                    .layer("Infrastructure").definedBy("..infrastructure..")
-                    .layer("Api").definedBy("..api..")
-                    .layer("Configuration").definedBy("..configuration..")
-                    .whereLayer("Configuration").mayNotBeAccessedByAnyLayer()
-                    .whereLayer("Api").mayNotBeAccessedByAnyLayer()
-                    .whereLayer("Infrastructure").mayOnlyBeAccessedByLayers("Api", "Configuration")
-                    .whereLayer("Application").mayOnlyBeAccessedByLayers("Api", "Infrastructure", "Configuration")
-                    .whereLayer("Domain").mayOnlyBeAccessedByLayers("Application", "Infrastructure", "Api", "Configuration");
+                    .layer("Domain")
+                    .definedBy("..domain..")
+                    .layer("Application")
+                    .definedBy("..application..")
+                    .layer("Infrastructure")
+                    .definedBy("..infrastructure..")
+                    .layer("Api")
+                    .definedBy("..api..")
+                    .layer("Configuration")
+                    .definedBy("..configuration..")
+                    .whereLayer("Configuration")
+                    .mayNotBeAccessedByAnyLayer()
+                    .whereLayer("Api")
+                    .mayNotBeAccessedByAnyLayer()
+                    .whereLayer("Infrastructure")
+                    .mayOnlyBeAccessedByLayers("Api", "Configuration")
+                    .whereLayer("Application")
+                    .mayOnlyBeAccessedByLayers("Api", "Infrastructure", "Configuration")
+                    .whereLayer("Domain")
+                    .mayOnlyBeAccessedByLayers(
+                            "Application", "Infrastructure", "Api", "Configuration");
 }

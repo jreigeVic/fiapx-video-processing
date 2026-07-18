@@ -6,4 +6,3 @@ import org.springframework.web.bind.annotation.RestController;
 public class VideoController {
     // Controller scaffold only, no endpoints exposed
 }
-

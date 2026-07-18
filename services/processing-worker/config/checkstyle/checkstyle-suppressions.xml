@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions>
+    <!-- ArchUnit's own convention names rule fields as readable snake_case
+         sentences (see docs/HLD and ArchUnit's official examples), which is
+         not a real naming defect. -->
+    <suppress checks="ConstantName" files="[\\/]architecture[\\/].*\.java$"/>
+</suppressions>

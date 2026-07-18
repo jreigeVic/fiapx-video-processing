@@ -21,7 +21,13 @@ public final class RefreshToken {
     private final Instant createdAt;
     private boolean revoked;
 
-    private RefreshToken(UUID id, UUID userId, String tokenHash, Instant expiresAt, boolean revoked, Instant createdAt) {
+    private RefreshToken(
+            UUID id,
+            UUID userId,
+            String tokenHash,
+            Instant expiresAt,
+            boolean revoked,
+            Instant createdAt) {
         this.id = id;
         this.userId = userId;
         this.tokenHash = tokenHash;
@@ -33,18 +39,32 @@ public final class RefreshToken {
     public static IssuedRefreshToken issue(UUID userId, Duration timeToLive) {
         String rawValue = generateRawValue();
         Instant now = Instant.now();
-        RefreshToken token = new RefreshToken(UUID.randomUUID(), userId, hash(rawValue), now.plus(timeToLive), false, now);
+        RefreshToken token =
+                new RefreshToken(
+                        UUID.randomUUID(),
+                        userId,
+                        hash(rawValue),
+                        now.plus(timeToLive),
+                        false,
+                        now);
         return new IssuedRefreshToken(token, rawValue);
     }
 
-    public static RefreshToken reconstruct(UUID id, UUID userId, String tokenHash, Instant expiresAt, boolean revoked, Instant createdAt) {
+    public static RefreshToken reconstruct(
+            UUID id,
+            UUID userId,
+            String tokenHash,
+            Instant expiresAt,
+            boolean revoked,
+            Instant createdAt) {
         return new RefreshToken(id, userId, tokenHash, expiresAt, revoked, createdAt);
     }
 
     public static String hash(String rawValue) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashed = digest.digest(rawValue.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] hashed =
+                    digest.digest(rawValue.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hashed);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 algorithm not available", e);

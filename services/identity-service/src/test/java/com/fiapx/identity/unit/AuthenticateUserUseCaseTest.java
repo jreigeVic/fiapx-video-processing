@@ -27,16 +27,25 @@ class AuthenticateUserUseCaseTest {
     private final UserRepositoryPort userRepositoryPort = mock(UserRepositoryPort.class);
     private final PasswordEncoderPort passwordEncoderPort = mock(PasswordEncoderPort.class);
     private final TokenProviderPort tokenProviderPort = mock(TokenProviderPort.class);
-    private final RefreshTokenRepositoryPort refreshTokenRepositoryPort = mock(RefreshTokenRepositoryPort.class);
-    private final AuthenticateUserUseCase useCase = new AuthenticateUserUseCase(
-            userRepositoryPort, passwordEncoderPort, tokenProviderPort, refreshTokenRepositoryPort, Duration.ofDays(7));
+    private final RefreshTokenRepositoryPort refreshTokenRepositoryPort =
+            mock(RefreshTokenRepositoryPort.class);
+    private final AuthenticateUserUseCase useCase =
+            new AuthenticateUserUseCase(
+                    userRepositoryPort,
+                    passwordEncoderPort,
+                    tokenProviderPort,
+                    refreshTokenRepositoryPort,
+                    Duration.ofDays(7));
 
     @Test
     void authenticatesValidCredentialsAndIssuesTokenPair() {
-        User user = User.register("Jane", Email.of("jane@user.com"), PasswordHash.fromHash("hashed"));
-        when(userRepositoryPort.findByEmail(Email.of("jane@user.com"))).thenReturn(Optional.of(user));
+        User user =
+                User.register("Jane", Email.of("jane@user.com"), PasswordHash.fromHash("hashed"));
+        when(userRepositoryPort.findByEmail(Email.of("jane@user.com")))
+                .thenReturn(Optional.of(user));
         when(passwordEncoderPort.matches("raw-password", user.getPasswordHash())).thenReturn(true);
-        when(tokenProviderPort.generateAccessToken(user)).thenReturn(new AccessToken("jwt-value", 900));
+        when(tokenProviderPort.generateAccessToken(user))
+                .thenReturn(new AccessToken("jwt-value", 900));
 
         AuthResult result = useCase.execute("jane@user.com", "raw-password");
 
@@ -47,7 +56,8 @@ class AuthenticateUserUseCaseTest {
 
     @Test
     void rejectsUnknownEmail() {
-        when(userRepositoryPort.findByEmail(Email.of("missing@user.com"))).thenReturn(Optional.empty());
+        when(userRepositoryPort.findByEmail(Email.of("missing@user.com")))
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute("missing@user.com", "raw-password"))
                 .isInstanceOf(InvalidCredentialsException.class);
@@ -55,8 +65,10 @@ class AuthenticateUserUseCaseTest {
 
     @Test
     void rejectsWrongPassword() {
-        User user = User.register("Jane", Email.of("jane@user.com"), PasswordHash.fromHash("hashed"));
-        when(userRepositoryPort.findByEmail(Email.of("jane@user.com"))).thenReturn(Optional.of(user));
+        User user =
+                User.register("Jane", Email.of("jane@user.com"), PasswordHash.fromHash("hashed"));
+        when(userRepositoryPort.findByEmail(Email.of("jane@user.com")))
+                .thenReturn(Optional.of(user));
         when(passwordEncoderPort.matches("wrong", user.getPasswordHash())).thenReturn(false);
 
         assertThatThrownBy(() -> useCase.execute("jane@user.com", "wrong"))

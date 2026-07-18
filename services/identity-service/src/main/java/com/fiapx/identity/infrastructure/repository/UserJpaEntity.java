@@ -11,8 +11,7 @@ import java.util.UUID;
 @Table(name = "users")
 public class UserJpaEntity {
 
-    @Id
-    private UUID id;
+    @Id private UUID id;
 
     @Column(nullable = false)
     private String name;
@@ -26,10 +25,10 @@ public class UserJpaEntity {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    protected UserJpaEntity() {
-    }
+    protected UserJpaEntity() {}
 
-    public UserJpaEntity(UUID id, String name, String email, String passwordHash, Instant createdAt) {
+    public UserJpaEntity(
+            UUID id, String name, String email, String passwordHash, Instant createdAt) {
         this.id = id;
         this.name = name;
         this.email = email;

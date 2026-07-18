@@ -1,11 +1,13 @@
 package com.fiapx.identity.domain.model;
 
+import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
 public final class Email {
 
-    private static final Pattern FORMAT = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final Pattern FORMAT =
+            Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     private final String value;
 
@@ -17,7 +19,7 @@ public final class Email {
         if (rawValue == null || rawValue.isBlank()) {
             throw new IllegalArgumentException("Email must not be blank");
         }
-        String normalized = rawValue.trim().toLowerCase();
+        String normalized = rawValue.trim().toLowerCase(Locale.ROOT);
         if (!FORMAT.matcher(normalized).matches()) {
             throw new IllegalArgumentException("Email has an invalid format");
         }
@@ -30,13 +32,7 @@ public final class Email {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof Email email)) {
-            return false;
-        }
-        return value.equals(email.value);
+        return this == other || (other instanceof Email email && value.equals(email.value));
     }
 
     @Override

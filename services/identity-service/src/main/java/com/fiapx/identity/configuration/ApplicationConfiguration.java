@@ -33,7 +33,8 @@ public class ApplicationConfiguration {
 
     @Bean
     public TokenProviderPort tokenProviderPort(JwtProperties jwtProperties) {
-        return new JwtTokenProviderAdapter(jwtProperties.getSecret(), jwtProperties.getAccessTokenExpirationSeconds());
+        return new JwtTokenProviderAdapter(
+                jwtProperties.getSecret(), jwtProperties.getAccessTokenExpirationSeconds());
     }
 
     @Bean
@@ -42,31 +43,42 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    public RefreshTokenRepositoryPort refreshTokenRepositoryPort(RefreshTokenJpaRepository refreshTokenJpaRepository) {
+    public RefreshTokenRepositoryPort refreshTokenRepositoryPort(
+            RefreshTokenJpaRepository refreshTokenJpaRepository) {
         return new JpaRefreshTokenRepositoryAdapter(refreshTokenJpaRepository);
     }
 
     @Bean
-    public RegisterUserUseCase registerUserUseCase(UserRepositoryPort userRepositoryPort, PasswordEncoderPort passwordEncoderPort) {
+    public RegisterUserUseCase registerUserUseCase(
+            UserRepositoryPort userRepositoryPort, PasswordEncoderPort passwordEncoderPort) {
         return new RegisterUserUseCase(userRepositoryPort, passwordEncoderPort);
     }
 
     @Bean
-    public AuthenticateUserUseCase authenticateUserUseCase(UserRepositoryPort userRepositoryPort,
-                                                             PasswordEncoderPort passwordEncoderPort,
-                                                             TokenProviderPort tokenProviderPort,
-                                                             RefreshTokenRepositoryPort refreshTokenRepositoryPort,
-                                                             JwtProperties jwtProperties) {
-        return new AuthenticateUserUseCase(userRepositoryPort, passwordEncoderPort, tokenProviderPort, refreshTokenRepositoryPort,
+    public AuthenticateUserUseCase authenticateUserUseCase(
+            UserRepositoryPort userRepositoryPort,
+            PasswordEncoderPort passwordEncoderPort,
+            TokenProviderPort tokenProviderPort,
+            RefreshTokenRepositoryPort refreshTokenRepositoryPort,
+            JwtProperties jwtProperties) {
+        return new AuthenticateUserUseCase(
+                userRepositoryPort,
+                passwordEncoderPort,
+                tokenProviderPort,
+                refreshTokenRepositoryPort,
                 Duration.ofSeconds(jwtProperties.getRefreshTokenExpirationSeconds()));
     }
 
     @Bean
-    public RefreshTokenUseCase refreshTokenUseCase(UserRepositoryPort userRepositoryPort,
-                                                     TokenProviderPort tokenProviderPort,
-                                                     RefreshTokenRepositoryPort refreshTokenRepositoryPort,
-                                                     JwtProperties jwtProperties) {
-        return new RefreshTokenUseCase(userRepositoryPort, tokenProviderPort, refreshTokenRepositoryPort,
+    public RefreshTokenUseCase refreshTokenUseCase(
+            UserRepositoryPort userRepositoryPort,
+            TokenProviderPort tokenProviderPort,
+            RefreshTokenRepositoryPort refreshTokenRepositoryPort,
+            JwtProperties jwtProperties) {
+        return new RefreshTokenUseCase(
+                userRepositoryPort,
+                tokenProviderPort,
+                refreshTokenRepositoryPort,
                 Duration.ofSeconds(jwtProperties.getRefreshTokenExpirationSeconds()));
     }
 
@@ -76,7 +88,8 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    public GetAuthenticatedUserUseCase getAuthenticatedUserUseCase(UserRepositoryPort userRepositoryPort) {
+    public GetAuthenticatedUserUseCase getAuthenticatedUserUseCase(
+            UserRepositoryPort userRepositoryPort) {
         return new GetAuthenticatedUserUseCase(userRepositoryPort);
     }
 

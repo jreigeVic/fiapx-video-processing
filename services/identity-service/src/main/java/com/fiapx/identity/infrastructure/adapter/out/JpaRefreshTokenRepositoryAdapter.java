@@ -16,13 +16,14 @@ public class JpaRefreshTokenRepositoryAdapter implements RefreshTokenRepositoryP
 
     @Override
     public RefreshToken save(RefreshToken refreshToken) {
-        RefreshTokenJpaEntity entity = new RefreshTokenJpaEntity(
-                refreshToken.getId(),
-                refreshToken.getUserId(),
-                refreshToken.getTokenHash(),
-                refreshToken.getExpiresAt(),
-                refreshToken.isRevoked(),
-                refreshToken.getCreatedAt());
+        RefreshTokenJpaEntity entity =
+                new RefreshTokenJpaEntity(
+                        refreshToken.getId(),
+                        refreshToken.getUserId(),
+                        refreshToken.getTokenHash(),
+                        refreshToken.getExpiresAt(),
+                        refreshToken.isRevoked(),
+                        refreshToken.getCreatedAt());
         jpaRepository.save(entity);
         return refreshToken;
     }
