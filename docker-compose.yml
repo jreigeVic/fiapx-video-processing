@@ -18,7 +18,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_MULTIPLE_DATABASES:-auth_db,video_db,notification_db}
+      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_MULTIPLE_DATABASES:-auth_db,video_db,processing_db,notification_db}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -40,13 +40,14 @@ services:
     env_file:
       - .env
     environment:
-      SERVICES: ${LOCALSTACK_SERVICES:-s3,sns,sqs}
+      SERVICES: ${LOCALSTACK_SERVICES:-s3,sns,sqs,ses}
       DEBUG: ${LOCALSTACK_DEBUG:-0}
       PERSISTENCE: ${LOCALSTACK_PERSISTENCE:-1}
     ports:
       - "${LOCALSTACK_PORT:-4566}:4566"
     volumes:
       - localstack_data:/var/lib/localstack
+      - ./infrastructure/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh:ro
     networks:
       - fiapx-network
     healthcheck:

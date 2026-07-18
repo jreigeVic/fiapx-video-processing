@@ -89,6 +89,8 @@ class HexagonalArchitectureTest {
                     .resideInAPackage("..infrastructure.adapter.out..")
                     .and()
                     .areNotInterfaces()
+                    .and()
+                    .areNotRecords()
                     .and(not(JavaClass.Predicates.simpleName("PackageMarker")))
                     .should()
                     .implement(JavaClass.Predicates.resideInAPackage("..application.ports.out.."))

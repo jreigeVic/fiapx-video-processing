@@ -35,15 +35,24 @@ sonarqube {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.postgresql:postgresql")
 
-    // AWS SDK v2 BOM and S3 module - traceability: required by Video Service for S3 storage (ADR-011, LLD)
+    // JWT libraries - traceability: validates tokens issued by Identity Service (shared secret, ADR-009)
+    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
+
+    // AWS SDK v2 BOM and modules - traceability: S3 storage, SNS event publishing, SQS result consumption (ADR-006, LLD)
     implementation(platform("software.amazon.awssdk:bom:2.20.0"))
     implementation("software.amazon.awssdk:s3")
+    implementation("software.amazon.awssdk:sns")
+    implementation("software.amazon.awssdk:sqs")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.mockito:mockito-core:5.3.1")
