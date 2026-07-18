@@ -219,3 +219,64 @@ jobs:
         with:
           sarif_file: trivy-${{ matrix.service }}.sarif
           category: trivy-${{ matrix.service }}
+
+  # Boots the full stack (Postgres, LocalStack, all four services) via the
+  # same docker-compose.yml used for local development and waits for every
+  # container's own healthcheck to report healthy. Runs only after every
+  # service has already built/tested/passed above - this job's purpose is
+  # validating the services actually start and connect to their real
+  # dependencies together, not re-running unit tests.
+  docker-compose-smoke:
+    name: Docker Compose smoke test
+    runs-on: ubuntu-latest
+    needs: build-test-analyze
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build service jars
+        run: |
+          for service in identity-service video-service processing-worker notification-service; do
+            (cd "services/$service" && chmod +x ./gradlew && ./gradlew bootJar)
+          done
+
+      - name: Create .env from example
+        run: cp .env.example .env
+
+      - name: Start the stack
+        run: docker compose up -d --build
+
+      - name: Wait for all services to be healthy
+        run: |
+          containers="fiapx-postgres fiapx-localstack fiapx-identity-service fiapx-video-service fiapx-processing-worker fiapx-notification-service"
+          for i in $(seq 1 60); do
+            all_healthy=true
+            for c in $containers; do
+              status=$(docker inspect --format='{{.State.Health.Status}}' "$c" 2>/dev/null || echo "missing")
+              if [ "$status" != "healthy" ]; then
+                all_healthy=false
+              fi
+            done
+            if [ "$all_healthy" = "true" ]; then
+              echo "All containers healthy"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Timed out waiting for containers to become healthy"
+          docker compose ps
+          exit 1
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down the stack
+        if: always()
+        run: docker compose down -v
