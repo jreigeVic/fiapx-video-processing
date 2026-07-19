@@ -65,4 +65,31 @@ Same issue already noted below for identity-service now exists identically in vi
 
 ---
 
+---
+
+## Operational Blockers — Final Roadmap Execution (Epics 008-017)
+
+Per standing execution rule (approved 2026-07-19): operational blockers never stop roadmap execution. Each is documented here, its task is marked Blocked/Pending Validation (never completed), and work continues to the next roadmap item that doesn't depend on it. All entries below are reviewed together at Epic 017 (Final Release) consolidation.
+
+### [Epic 009 - Kubernetes] Cannot push the 4 service images to ECR from this session
+
+**Epic/Task afetadas:** Epic 009 (Kubernetes) - task #20, specifically installing the 4 `microservice` Helm releases (identity-service, video-service, processing-worker, notification-service). Blocks the same step in Epic 010 (CD Pipeline) if not resolved first.
+
+**Descrição do bloqueio:** The 4 Helm releases need their image already pushed to ECR (`infrastructure/terraform/ecr.tf`). Neither available path can produce that image right now:
+- `cd.yml`'s `build-push-ecr` job can only be triggered via `gh workflow run` / the Actions API once the workflow file exists on the repository's default branch (`main`) - GitHub does not expose `workflow_dispatch` for a workflow that only exists on a feature branch. `cd.yml` currently exists only on `epic/009-kubernetes` (stacked on `epic/015-security-hardening` / `epic/008-infrastructure-terraform`), none of which are merged to `main` yet.
+- No local Docker daemon is available in this session (`docker info` fails) to build and `docker push` the images directly.
+
+**Causa raiz:** GitHub Actions `workflow_dispatch` discovery is scoped to the default branch; this repo's epic branches are not merged to `main` until Epic 017 per the original roadmap sequencing. Combined with no local Docker, there is currently no path to produce the 4 images without either (a) an early merge to `main`, or (b) Docker becoming available locally/remotely.
+
+**Impacto:** The 4 `microservice` Helm releases cannot be installed yet. What *is* already deployed and verified on the real `fiapx-eks` cluster: `cluster-setup` release (namespace, DB/JWT/New-Relic secrets, DB bootstrap Job - all 4 logical databases created on the shared RDS instance), and `metrics-server`. Epic 009's kubectl evidence (`get pods`, `get svc`, `get hpa`, `top pods` for the 4 services) cannot be captured until the images exist.
+
+**Pré-requisitos para retomada:** One of:
+1. User approves merging `epic/008-infrastructure-terraform` → `epic/015-security-hardening` → `epic/009-kubernetes` into `main` (would make `cd.yml` dispatchable), or
+2. Local Docker becomes available in-session (user starts Docker Desktop), or
+3. User builds/pushes the 4 images through some other path of their choosing.
+
+**Critério para considerar resolvida:** All 4 ECR repositories (`fiapx/identity-service`, `fiapx/video-service`, `fiapx/processing-worker`, `fiapx/notification-service`) have at least one pushed image tag, and the 4 `microservice` Helm releases install and reach `Ready` on `fiapx-eks`.
+
+---
+
 *Recorded during TASK-002.6 (Architecture Readiness Review). Do not act on these items outside of an explicitly approved task.*
