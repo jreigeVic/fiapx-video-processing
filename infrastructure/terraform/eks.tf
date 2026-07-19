@@ -26,3 +26,15 @@ resource "aws_eks_node_group" "default" {
     max_size     = var.node_scaling.max
   }
 }
+
+# CloudWatch Container Insights (ADR-008/ADR-015: infra monitoring pillar).
+# No service_account_role_arn set - no IRSA/OIDC provider in AWS Academy
+# (infrastructure/terraform/iam.tf), so the addon's pods run under the
+# node instance profile (LabRole), the same credential path every app pod
+# already uses.
+resource "aws_eks_addon" "cloudwatch_observability" {
+  cluster_name = aws_eks_cluster.this.name
+  addon_name   = "amazon-cloudwatch-observability"
+
+  depends_on = [aws_eks_node_group.default]
+}

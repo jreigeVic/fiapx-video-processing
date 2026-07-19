@@ -138,3 +138,11 @@ Durante o processo de definição arquitetural foram avaliadas diferentes soluç
 Como estratégia principal foi adotada uma plataforma unificada de observabilidade baseada em OpenTelemetry e New Relic.
 
 Soluções baseadas em Prometheus e Grafana permanecem como alternativas arquiteturais viáveis para futuras evoluções ou diferentes cenários de implantação.
+
+---
+
+## Implementação (Epic 016 / ADR-015)
+
+A estratégia descrita neste documento foi efetivamente implementada conforme `docs/ADR/ADR-015-observability-implementation.md`: agente Java do OpenTelemetry (auto-instrumentação) embutido nas 4 imagens Docker, exportando via OTLP para o New Relic; addon gerenciado do EKS `amazon-cloudwatch-observability` para Container Insights, sem necessidade de IRSA/OIDC (indisponível no AWS Academy).
+
+Prometheus, Grafana e Micrometer standalone foram reavaliados nesta rodada de fechamento e mantidos como não adotados: duplicariam o que o New Relic já cobre (métricas, logs, traces) sem benefício proporcional ao escopo do hackathon.

@@ -55,6 +55,20 @@ envFrom: []
 # env: [{name: FOO, value: "bar"}]
 env: []
 
+# OpenTelemetry -> New Relic (ADR-008, implemented via ADR-015). The Java
+# agent is always in the image (see each Dockerfile); this just turns on
+# export by setting OTEL_*_EXPORTER=otlp and pointing it at New Relic,
+# using the license key from cluster-setup's fiapx-newrelic-license
+# Secret. serviceName defaults to the release name in each
+# values-<service>.yaml.
+observability:
+  enabled: true
+  serviceName: ""
+  otlpEndpoint: "https://otlp.nr-data.net:4318"
+  otlpProtocol: "http/protobuf"
+  resourceAttributes: "service.namespace=fiapx,deployment.environment=aws-academy"
+  newRelicLicenseSecretName: fiapx-newrelic-license
+
 podAnnotations: {}
 nodeSelector: {}
 tolerations: []
