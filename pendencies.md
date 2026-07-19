@@ -116,6 +116,20 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 **Critério para considerar resolvida:** `kubectl create secret` (or a `cluster-setup` re-install with the real key in its values) updates `fiapx-newrelic-license`, and the New Relic UI shows incoming data from at least one of the 4 services.
 
+### [Epic 014 - Documentation & Test Alignment] LocalStack S3/SNS/SQS integration tests not written
+
+**Epic/Task afetadas:** Epic 014 - task 9 (partial). `docs/LLD/video-service.md`, `docs/LLD/processing-worker.md` and `docs/LLD/notification-service.md` also promise LocalStack-based integration tests for S3/SNS/SQS adapters, in addition to the Testcontainers persistence tests (written and committed).
+
+**Descrição do bloqueio:** Not a blocker in the operational sense (no external dependency) - just not attempted this pass, given the size of what was already covered (3 new Testcontainers tests + the doc-sync items) in a single session.
+
+**Causa raiz:** Scope/time, not an external impediment.
+
+**Impacto:** The S3/SNS/SQS adapters (`S3StorageAdapter`, `SnsEventPublisherAdapter`, SQS consumers) remain covered only by unit tests with mocked ports, not integration tests against a real (LocalStack-emulated) AWS API. Lower risk than the persistence gap, since the SDK calls themselves are thin and mostly exercised already via `docker-compose-smoke`'s full-stack boot.
+
+**Pré-requisitos para retomada:** None external - just pick this up as a follow-up task.
+
+**Critério para considerar resolvida:** Each of the 3 services has at least one LocalStack-backed integration test for its AWS adapter(s).
+
 ---
 
 *Recorded during TASK-002.6 (Architecture Readiness Review). Do not act on these items outside of an explicitly approved task.*
