@@ -102,6 +102,20 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 **Critério para considerar resolvida:** A `cd.yml` run completes green end-to-end, including the smoke test asserting `PROCESSED` and a successful download URL.
 
+### [Epic 016 - Observability] New Relic account/License Key needed
+
+**Epic/Task afetadas:** Epic 016 (Observability) - task #23, `fiapx-newrelic-license` Secret value.
+
+**Descrição do bloqueio:** All the code/infra wiring for OTLP export to New Relic is implemented and verified (OTel Java agent in all 4 images, verified inert in `docker-compose-smoke`; Helm's `observability` block, verified rendering correctly; `fiapx-newrelic-license` Secret scaffolded in `cluster-setup`, currently blank). The actual license key requires a New Relic account, which is an external, manual step for the user (cannot be created on their behalf).
+
+**Causa raiz:** External dependency - not something resolvable from within this session.
+
+**Impacto:** Until the Secret is populated, `OTEL_EXPORTER_OTLP_HEADERS` resolves to `api-key=` (empty), so New Relic will reject the OTLP payloads (traces/metrics/logs are attempted but not accepted) - no functional gap in the application itself, but no dashboard/service-map evidence until this is set.
+
+**Pré-requisitos para retomada:** User creates a free New Relic account and obtains a License Key.
+
+**Critério para considerar resolvida:** `kubectl create secret` (or a `cluster-setup` re-install with the real key in its values) updates `fiapx-newrelic-license`, and the New Relic UI shows incoming data from at least one of the 4 services.
+
 ---
 
 *Recorded during TASK-002.6 (Architecture Readiness Review). Do not act on these items outside of an explicitly approved task.*
