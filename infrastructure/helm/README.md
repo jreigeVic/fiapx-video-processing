@@ -125,6 +125,49 @@ declared in the generated overlay for this reason (see comments in each
 kubectl get svc identity-service video-service -n fiapx
 ```
 
+## CD (GitHub Actions)
+
+`.github/workflows/cd.yml` is `workflow_dispatch`-only: AWS Academy
+session credentials rotate every ~4h, so there is no long-lived AWS
+identity to trigger this on push. It has 2 jobs:
+
+- **`build-push-ecr`**: builds each service's jar and pushes its image to
+  ECR, tagged by commit SHA and `latest`.
+- **`deploy`**: resolves the environment via live AWS CLI lookups
+  (deterministic names Terraform assigns - no `terraform output` access
+  from CI, since the state is local-only to the operator's machine),
+  then `helm upgrade --install`s the 4 microservice releases (tagged by
+  commit SHA, not `latest` - traceable rollbacks), and runs an end-to-end
+  smoke test (register -> login -> upload a tiny real fixture video via
+  `ffmpeg` -> poll status -> assert `PROCESSED` -> download). **Does not**
+  deploy `cluster-setup` - see the manual steps above, done once per
+  environment.
+
+### Required repository configuration
+
+- **Secrets** (refresh every lab session, before dispatching):
+  `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`.
+- **Variable**: `SES_SENDER_EMAIL` (the same address verified in
+  `infrastructure/terraform/terraform.tfvars` / SES, or a placeholder if
+  `ses_manage_identities` is disabled per ADR-016).
+
+### Per-lab-session runbook
+
+1. Start the AWS Academy lab session; copy its temporary credentials.
+2. Update the 3 GitHub secrets above (`gh secret set NAME` or the repo
+   Settings UI).
+3. If infrastructure isn't already up: `terraform apply`
+   (`infrastructure/terraform`), then the one-time manual steps in
+   Prerequisites/Deploy order 1-2 above.
+4. Dispatch the pipeline: `gh workflow run cd.yml`.
+5. Get the public endpoints from the deploy job's summary, or
+   `kubectl get svc identity-service video-service -n fiapx`.
+6. Between sessions, EKS/RDS keep accruing AWS Academy budget whether or
+   not anything is deployed on them; `terraform destroy` if the budget is
+   a concern, `terraform apply` again next session (~15min for EKS to
+   come back, then re-run the manual cluster-setup step once, since a new
+   cluster starts empty).
+
 ## Out of Scope Findings
 
 - `docs/HLD/14 - CI-CD.md` lists **GitHub Container Registry** as the
@@ -132,7 +175,3 @@ kubectl get svc identity-service video-service -n fiapx
   provisions **ECR** instead. Pre-existing inconsistency, not introduced
   by this phase - flagging per CLAUDE.md scope protection rather than
   editing HLD docs outside the current task.
-- No CI validation (`helm lint` / `helm template`) exists yet for these
-  charts. There is no cluster available to this session to deploy and
-  verify at runtime, and adding a CI job is a CD-phase-adjacent change -
-  flagging for a follow-up rather than expanding this task's scope.
