@@ -17,7 +17,11 @@ data:
       db_trimmed="$(echo -n "$db" | xargs)"
       [ -z "$db_trimmed" ] && continue
       echo "Ensuring database '$db_trimmed' exists"
-      psql -v ON_ERROR_STOP=1 <<EOSQL
+      # -d postgres: the always-present maintenance database. psql with no
+      # -d defaults to a database named after PGUSER, which doesn't exist
+      # yet on a fresh RDS instance - and CREATE DATABASE can't run inside
+      # the database it's creating anyway.
+      psql -v ON_ERROR_STOP=1 -d postgres <<EOSQL
     SELECT 'CREATE DATABASE "$db_trimmed"'
     WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$db_trimmed')\gexec
     EOSQL
