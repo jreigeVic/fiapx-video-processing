@@ -74,12 +74,12 @@ Each microservice owns its own logical database (Database per Service, per ADR-0
 Default value:
 
 ```
-POSTGRES_MULTIPLE_DATABASES=auth_db,video_db,notification_db
+POSTGRES_MULTIPLE_DATABASES=auth_db,video_db,processing_db,notification_db
 ```
 
 This keeps the initialization script generic and reusable: adding a database for a future microservice only requires appending its name to `POSTGRES_MULTIPLE_DATABASES` in `.env` — the script itself never needs to change. This scales cleanly as the number of microservices grows, compared to maintaining a separate SQL file per service or hardcoding names in the script.
 
-> Note: the databases above use the names already present in each service's `application.yml` (`auth_db`, `video_db`, `notification_db`), matching ADR-012's naming examples.
+> Note: the databases above use the names already present in each service's `application.yml` (`auth_db`, `video_db`, `processing_db`, `notification_db`), matching ADR-012's naming examples.
 
 ### LocalStack
 
@@ -109,7 +109,7 @@ All variables are documented with placeholders in [`.env.example`](../../.env.ex
 | `POSTGRES_USER` | Postgres superuser | `postgres` |
 | `POSTGRES_PASSWORD` | Postgres superuser password | `postgres` |
 | `POSTGRES_PORT` | Host port mapped to Postgres | `5432` |
-| `POSTGRES_MULTIPLE_DATABASES` | Comma-separated list of logical databases to create | `auth_db,video_db,notification_db` |
+| `POSTGRES_MULTIPLE_DATABASES` | Comma-separated list of logical databases to create | `auth_db,video_db,processing_db,notification_db` |
 | `LOCALSTACK_PORT` | Host port mapped to LocalStack | `4566` |
 | `LOCALSTACK_SERVICES` | AWS services emulated by LocalStack | `s3,sns,sqs` |
 | `LOCALSTACK_DEBUG` | LocalStack debug logging | `0` |

@@ -27,7 +27,7 @@ HLD-14 (CI/CD) - `helm upgrade identity-service` never touches the other
   LoadBalancer`, which EKS's in-tree cloud provider is expected to satisfy
   with a classic ELB using only the node's `LabRole` - no extra controller
   to install. This is a documented deviation from the "Ingress Controller"
-  component listed in `docs/HLD/10 - Deployment Architecture.md`. Not
+  component listed in `docs/HLD/10-deployment-architecture.md`. Not
   verified against a live cluster in this session (no cluster available
   here) - if `LabRole` turns out to lack the ELB permissions, this is the
   first thing to check when validating the first real deploy.
@@ -170,7 +170,7 @@ identity to trigger this on push. It has 2 jobs:
 
 ## Out of Scope Findings
 
-- `docs/HLD/14 - CI-CD.md` lists **GitHub Container Registry** as the
+- `docs/HLD/14-ci-cd.md` lists **GitHub Container Registry** as the
   image registry, but `infrastructure/terraform/ecr.tf` (prior epic)
   provisions **ECR** instead. Pre-existing inconsistency, not introduced
   by this phase - flagging per CLAUDE.md scope protection rather than

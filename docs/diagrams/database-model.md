@@ -10,10 +10,12 @@ Representar os modelos de dados por servico, preservando Database per Service.
 flowchart LR
   Auth[(auth_db)]
   Video[(video_db)]
+  Processing[(processing_db)]
   Notification[(notification_db)]
 
   Identity["Identity Service"] --> Auth
   VideoService["Video Service"] --> Video
+  ProcessingWorker["Processing Worker"] --> Processing
   NotificationService["Notification Service"] --> Notification
 ```
 
@@ -46,6 +48,17 @@ erDiagram
     timestamp updated_at
   }
 
+  processed_events {
+    uuid event_id PK
+    string event_type
+    timestamp processed_at
+  }
+```
+
+## processing_db
+
+```mermaid
+erDiagram
   processed_events {
     uuid event_id PK
     string event_type
