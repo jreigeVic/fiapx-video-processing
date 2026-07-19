@@ -37,6 +37,17 @@ jobs:
       - name: Lint docs/api/openapi.yaml (Redocly)
         run: npx --yes @redocly/cli@1.25.0 lint docs/api/openapi.yaml
 
+      # openapi-to-postmanv2 generates random UUIDs (and randomized enum
+      # examples) on every run, so its output is never byte-identical
+      # between runs - a diff against the committed
+      # docs/api/postman_collection.json would fail on every PR regardless
+      # of whether the contract actually changed. This step only proves
+      # generation still succeeds against the current spec (catches the
+      # spec becoming unconvertible); regenerating the committed file after
+      # a real endpoint change is a manual step - see docs/api/README.md.
+      - name: Verify docs/api/openapi.yaml still converts to a Postman collection
+        run: npx --yes openapi-to-postmanv2 -s docs/api/openapi.yaml -o /tmp/postman_collection.json -p
+
   # Syntax/schema validation of the AWS provisioning code. No cloud
   # credentials involved (init runs with -backend=false and validate never
   # calls AWS), so this runs on every PR like any other lint.
