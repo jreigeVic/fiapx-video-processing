@@ -41,8 +41,10 @@ Nao pertence ao Identity Service:
 | Caso de uso | Descricao |
 |-------------|-----------|
 | RegisterUser | Cria usuario com email e senha criptografada. |
-| AuthenticateUser | Valida credenciais e emite JWT. |
+| AuthenticateUser | Valida credenciais e emite JWT + refresh token. |
 | GetAuthenticatedUser | Retorna dados basicos do usuario autenticado. |
+| RefreshToken | Troca um refresh token valido por um novo par access/refresh token (rotacao). |
+| Logout | Revoga um refresh token especifico. |
 
 ## Arquitetura Interna
 
@@ -97,6 +99,17 @@ com.fiapx.identity
 | passwordHash | PasswordHash | Senha criptografada com BCrypt. |
 | createdAt | Instant | Data de criacao. |
 
+### RefreshToken
+
+| Campo | Tipo | Regra |
+|-------|------|-------|
+| id | UUID | Identificador do refresh token. |
+| userId | UUID | Usuario dono do token. |
+| tokenHash | String | Hash do valor opaco do token; o valor puro nunca e persistido. |
+| expiresAt | Instant | Expiracao do token. |
+| revoked | boolean | Marcado true no logout ou na rotacao. |
+| createdAt | Instant | Data de criacao. |
+
 ## Value Objects
 
 | Value Object | Regra |
@@ -111,15 +124,19 @@ com.fiapx.identity
 | RegisterUserRequest | name, email, password |
 | UserResponse | id, name, email |
 | LoginRequest | email, password |
-| LoginResponse | accessToken, tokenType, expiresIn |
+| LoginResponse | accessToken, tokenType, expiresIn, refreshToken |
+| RefreshTokenRequest | refreshToken |
+| LogoutRequest | refreshToken |
 
 ## Controllers
 
 | Metodo | Endpoint | Uso |
 |--------|----------|-----|
 | POST | /api/auth/register | Cadastro de usuario. |
-| POST | /api/auth/login | Autenticacao e emissao de JWT. |
+| POST | /api/auth/login | Autenticacao e emissao de JWT + refresh token. |
 | GET | /api/auth/me | Dados do usuario autenticado. |
+| POST | /api/auth/refresh | Rotaciona um refresh token valido por um novo par de tokens. |
+| POST | /api/auth/logout | Revoga um refresh token (endpoint protegido). |
 
 ## Use Cases
 
@@ -135,8 +152,22 @@ com.fiapx.identity
 
 1. Buscar usuario por email.
 2. Comparar senha com BCrypt.
-3. Gerar JWT.
-4. Retornar token.
+3. Gerar JWT (access token).
+4. Gerar e persistir (hash) um refresh token.
+5. Retornar access token e refresh token.
+
+### RefreshToken
+
+1. Buscar refresh token pelo hash do valor recebido.
+2. Validar que existe, nao esta revogado e nao expirou.
+3. Revogar o refresh token usado (rotacao).
+4. Gerar novo access token e novo refresh token.
+5. Retornar o novo par de tokens.
+
+### Logout
+
+1. Buscar refresh token pelo hash do valor recebido.
+2. Marcar como revogado se pertencer ao usuario autenticado.
 
 ## Ports
 
@@ -144,16 +175,21 @@ com.fiapx.identity
 |------|---------|------------------|
 | RegisterUserUseCase | Inbound | Cadastro de usuario. |
 | AuthenticateUserUseCase | Inbound | Autenticacao. |
+| RefreshTokenUseCase | Inbound | Rotacao de refresh token. |
+| LogoutUseCase | Inbound | Revogacao de refresh token. |
 | UserRepositoryPort | Outbound | Persistencia de usuarios. |
 | PasswordEncoderPort | Outbound | Hash e verificacao de senha. |
 | TokenProviderPort | Outbound | Geracao e validacao de JWT. |
+| RefreshTokenRepositoryPort | Outbound | Persistencia e consulta de refresh tokens. |
 
 ## Adapters
 
 | Adapter | Tipo | Responsabilidade |
 |---------|------|------------------|
 | AuthController | Inbound HTTP | Expor autenticacao. |
+| JwtAuthenticationFilter | Inbound security | Validar Bearer token em recursos protegidos. |
 | JpaUserRepositoryAdapter | Outbound persistence | Persistir usuarios. |
+| JpaRefreshTokenRepositoryAdapter | Outbound persistence | Persistir e consultar refresh tokens. |
 | BCryptPasswordEncoderAdapter | Outbound security | Hash de senha. |
 | JwtTokenProviderAdapter | Outbound security | JWT. |
 
@@ -162,6 +198,7 @@ com.fiapx.identity
 | Repositorio | Banco | Operacoes |
 |-------------|-------|-----------|
 | UserRepository | auth_db | save, findByEmail, existsByEmail, findById |
+| RefreshTokenRepository | auth_db | save, findByTokenHash, revoke |
 
 ## Eventos Publicados
 
@@ -182,6 +219,15 @@ erDiagram
     string password_hash
     timestamp created_at
   }
+  refresh_tokens {
+    uuid id PK
+    uuid user_id FK
+    string token_hash UK
+    timestamp expires_at
+    boolean revoked
+    timestamp created_at
+  }
+  users ||--o{ refresh_tokens : owns
 ```
 
 ## Fluxos
@@ -206,6 +252,7 @@ sequenceDiagram
 |------|----------|
 | Email ja cadastrado | 409 CONFLICT |
 | Credenciais invalidas | 401 UNAUTHORIZED |
+| Refresh token invalido, revogado ou expirado | 401 UNAUTHORIZED |
 | Requisicao invalida | 400 BAD REQUEST |
 
 ## Estrategia de Testes
@@ -226,4 +273,4 @@ sequenceDiagram
 
 ## Consideracoes
 
-Refresh Token permanece opcional para o MVP e nao faz parte do escopo obrigatorio deste LLD.
+Refresh Token e Logout fazem parte do escopo obrigatorio deste LLD (ver ADR-013). Escopo minimo: rotacao de refresh token a cada uso e revogacao individual via logout. Revogacao em massa de sessoes, listagem de sessoes ativas e blacklist de access token estao fora de escopo.

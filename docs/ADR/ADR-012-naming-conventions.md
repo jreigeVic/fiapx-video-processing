@@ -1,8 +1,8 @@
-# ADR-011 — Naming Conventions
+# ADR-012 — Naming Conventions
 
 Status: Accepted
 
-Date: YYYY-MM-DD
+Date: 2026-07-13
 
 Owner: Software Architect
 
@@ -76,12 +76,6 @@ VideoProcessed
 
 VideoFailed
 
-UserCreated
-
-UserAuthenticated
-
-NotificationSent
-
 Avoid:
 
 video_uploaded
@@ -118,7 +112,7 @@ Logical databases shall use snake_case.
 
 Examples
 
-identity_db
+auth_db
 
 video_db
 
