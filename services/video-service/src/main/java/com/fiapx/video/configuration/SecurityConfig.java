@@ -20,8 +20,7 @@ public class SecurityConfig {
             JwtAuthenticationFilter jwtAuthenticationFilter,
             RestAuthenticationEntryPoint restAuthenticationEntryPoint)
             throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                .sessionManagement(
+        http.sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(
                         handling -> handling.authenticationEntryPoint(restAuthenticationEntryPoint))
