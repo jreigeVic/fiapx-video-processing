@@ -100,3 +100,16 @@ Esses registros permitem rastrear operações importantes e apoiar processos de 
 A estratégia de segurança apresentada neste documento estabelece as diretrizes gerais para proteção da plataforma.
 
 Os detalhes de implementação relacionados à autenticação, autorização, gerenciamento de credenciais e configuração da infraestrutura serão apresentados posteriormente no Low Level Design e nas respectivas Architecture Decision Records (ADRs).
+
+---
+
+# Notas de Hardening (Epic 015)
+
+Checklist de segurança e operação revisado antes do release final. Cada item abaixo tem correção aplicada ou decisão registrada — nunca as duas coisas em aberto ao mesmo tempo.
+
+- **Containers non-root**: os 4 Dockerfiles (`identity-service`, `video-service`, `processing-worker`, `notification-service`) criam e utilizam um usuário `fiapx` dedicado (`USER fiapx`), reduzindo a superfície de ataque em caso de comprometimento do processo da aplicação.
+- **Validação de upload**: `video-service` valida content-type (allowlist `video/mp4`, `video/mpeg`, `video/quicktime`, `video/x-msvideo`, `video/x-matroska`) e tamanho máximo (100MB por arquivo, 105MB por requisição) antes de aceitar o vídeo, além da validação de arquivo não-vazio já existente. Ambos os limites são configuráveis via variável de ambiente (`VIDEO_UPLOAD_ALLOWED_CONTENT_TYPES`, `VIDEO_UPLOAD_MAX_FILE_SIZE_BYTES` e equivalentes do Spring multipart).
+- **Fallbacks de `DB_PASSWORD`/`JWT_SECRET` em `application.yml`**: os valores default (`postgres`, `CHANGE_ME_DEV_ONLY_SECRET_KEY_MIN_32_BYTES_LONG_0000`) existem apenas para permitir a execução local sem configuração adicional. Em todo ambiente implantado (Docker Compose, Kubernetes), essas variáveis são sempre fornecidas pelo ambiente — Kubernetes Secret nos manifests Helm (`infrastructure/helm/cluster-setup`) — e o fallback nunca é de fato utilizado fora de dev/local.
+- **CORS**: não configurado até o Epic 015. Como o projeto passou a incluir um frontend de demonstração (Epic 013) que fará chamadas cross-origin, `identity-service` e `video-service` passaram a expor uma política de CORS explícita (`fiapx.security.cors.allowed-origins`), com postura segura por padrão (nenhuma origem permitida até ser configurada via `IDENTITY_CORS_ALLOWED_ORIGINS`/`VIDEO_CORS_ALLOWED_ORIGINS`).
+- **`LabRole` compartilhada (AWS Academy)**: restrição aceita do ambiente de laboratório, não um gap a corrigir. O ambiente do AWS Academy bloqueia a criação de IAM Roles e de um provedor OIDC (IRSA), então o cluster EKS e o node group reutilizam a `LabRole` provida pelo Academy (`infrastructure/terraform/iam.tf`), e os pods herdam credenciais AWS via instance profile do node, sem chaves estáticas em nenhum container.
+- **S3**: bucket de vídeos já bloqueia todo acesso público (`aws_s3_bucket_public_access_block`, os 4 flags habilitados em `infrastructure/terraform/storage.tf`), e os downloads usam exclusivamente URLs pré-assinadas com expiração configurável. Nenhuma correção necessária — apenas registro de que o item já foi auditado e está correto.

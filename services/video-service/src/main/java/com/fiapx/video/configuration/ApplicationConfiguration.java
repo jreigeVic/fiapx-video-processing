@@ -23,6 +23,7 @@ import com.fiapx.video.infrastructure.messaging.ProcessingResultConsumer;
 import com.fiapx.video.infrastructure.repository.ProcessedEventJpaRepository;
 import com.fiapx.video.infrastructure.repository.VideoJpaRepository;
 import java.time.Duration;
+import java.util.HashSet;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +35,7 @@ import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
 @Configuration
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class, UploadProperties.class})
 @EnableScheduling
 public class ApplicationConfiguration {
 
@@ -71,8 +72,14 @@ public class ApplicationConfiguration {
     public UploadVideoUseCase uploadVideoUseCase(
             VideoRepositoryPort videoRepositoryPort,
             StoragePort storagePort,
-            EventPublisherPort eventPublisherPort) {
-        return new UploadVideoUseCase(videoRepositoryPort, storagePort, eventPublisherPort);
+            EventPublisherPort eventPublisherPort,
+            UploadProperties uploadProperties) {
+        return new UploadVideoUseCase(
+                videoRepositoryPort,
+                storagePort,
+                eventPublisherPort,
+                uploadProperties.getMaxFileSizeBytes(),
+                new HashSet<>(uploadProperties.getAllowedContentTypes()));
     }
 
     @Bean
