@@ -46,6 +46,6 @@ A separacao logica permite demonstrar Database per Service mantendo simplicidade
 
 ## Referencias
 
-- docs/HLD/06 - Architecture Overview.md
-- docs/HLD/09 - Event-Driven Architecture.md
+- docs/HLD/06-architecture-overview.md
+- docs/HLD/09-event-driven-architecture.md
 - .ai/rules/architecture-rules.md

@@ -45,6 +45,6 @@ PostgreSQL e compativel com Spring Data JPA, Flyway, transacoes e modelagem rela
 
 ## Referencias
 
-- docs/HLD/10 - Deployment Architecture.md
-- docs/HLD/15 - Architecture Decision Summary.md
+- docs/HLD/10-deployment-architecture.md
+- docs/HLD/15-decision-summary.md
 - .ai/context/stack.md

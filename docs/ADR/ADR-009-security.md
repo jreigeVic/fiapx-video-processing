@@ -46,6 +46,6 @@ A decisao atende aos requisitos de acesso protegido, menor privilegio, protecao 
 
 ## Referencias
 
-- docs/HLD/11 - Security.md
+- docs/HLD/11-security.md
 - .ai/rules/security-rules.md
 - .ai/context/stack.md

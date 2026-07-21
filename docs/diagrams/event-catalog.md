@@ -59,6 +59,7 @@ Indica que um video foi recebido pelo Video Service, armazenado no Amazon S3 e e
 {
   "videoId": "uuid",
   "ownerUserId": "uuid",
+  "ownerEmail": "user@example.com",
   "originalFileName": "video.mp4",
   "sourceObjectKey": "videos/original/uuid.mp4"
 }
@@ -107,6 +108,7 @@ Indica que o Processing Worker concluiu o processamento e armazenou o ZIP de res
 {
   "videoId": "uuid",
   "ownerUserId": "uuid",
+  "ownerEmail": "user@example.com",
   "resultObjectKey": "videos/results/uuid.zip",
   "frameCount": 120
 }
@@ -155,6 +157,7 @@ Indica que ocorreu falha no processamento do video.
 {
   "videoId": "uuid",
   "ownerUserId": "uuid",
+  "ownerEmail": "user@example.com",
   "failureReason": "PROCESSING_ERROR"
 }
 ```

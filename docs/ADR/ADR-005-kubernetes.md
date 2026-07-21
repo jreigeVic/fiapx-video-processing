@@ -45,6 +45,6 @@ Kubernetes fornece Deployments, Services, ConfigMaps, Secrets, probes, rolling u
 
 ## Referencias
 
-- docs/HLD/10 - Deployment Architecture.md
-- docs/HLD/13 - Scalability.md
+- docs/HLD/10-deployment-architecture.md
+- docs/HLD/13-scalability.md
 - .ai/context/architecture.md

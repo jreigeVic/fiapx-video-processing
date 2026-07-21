@@ -46,6 +46,6 @@ Eventos desacoplam produtores e consumidores, permitem fan-out, suportam retry e
 
 ## Referencias
 
-- docs/HLD/09 - Event-Driven Architecture.md
+- docs/HLD/09-event-driven-architecture.md
 - docs/HLD/03-functional-requirements.md
 - .ai/rules/architecture-rules.md

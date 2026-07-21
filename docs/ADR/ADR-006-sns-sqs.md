@@ -46,6 +46,6 @@ SNS/SQS preserva baixo acoplamento, permite fan-out, retry, DLQ e consumo indepe
 
 ## Referencias
 
-- docs/HLD/09 - Event-Driven Architecture.md
-- docs/HLD/13 - Scalability.md
+- docs/HLD/09-event-driven-architecture.md
+- docs/HLD/13-scalability.md
 - .ai/context/source/archfiapx.md

@@ -32,7 +32,7 @@ Each matrix run is independent (`fail-fast: false`), matching ADR-010's requirem
 4. **Build and run unit tests** — `build` task (runs `test` as a dependency).
 5. **Generate JaCoCo coverage report** — `jacocoTestReport`, producing `build/reports/jacoco/test/jacocoTestReport.xml`. The report is uploaded as a workflow artifact regardless of build outcome.
 6. **SonarCloud analysis** — `sonar` task, only when `SONAR_TOKEN` is configured (see below). This keeps the workflow usable before SonarCloud is wired up, and avoids failing PRs from environments where the secret isn't available.
-7. **Build Docker image** — reuses each service's existing `Dockerfile`, tagged `fiapx/<service>:ci`. The image is built locally in the runner only; it is never pushed to any registry (GHCR publishing is CD, out of scope here).
+7. **Build Docker image** — reuses each service's existing `Dockerfile`, tagged `fiapx/<service>:ci`. The image is built locally in the runner only; it is never pushed to any registry (ECR publishing is CD, out of scope here).
 8. **Trivy vulnerability scan (preparation)** — scans the image just built and uploads SARIF results to the repository's Security tab. `exit-code: '0'` means the scan never fails the build; this is scan *preparation*, not an enforced gate. Turning it into a blocking gate is a future decision.
 
 ---
@@ -114,7 +114,7 @@ Configured in the GitHub repository settings (`Settings > Secrets and variables 
 
 `GITHUB_TOKEN` is provided automatically by GitHub Actions and requires no manual setup.
 
-No AWS, GHCR or New Relic secrets are required by this workflow — none of its steps use them.
+No AWS, ECR or New Relic secrets are required by this workflow — none of its steps use them.
 
 ---
 
@@ -156,4 +156,4 @@ No AWS, GHCR or New Relic secrets are required by this workflow — none of its 
 - AWS infrastructure provisioning.
 - Terraform.
 - Release automation.
-- Pushing images to GHCR (build-only, for scanning purposes).
+- Pushing images to a registry (build-only here, for scanning purposes; ECR push is CD's job - `.github/workflows/cd.yml`).

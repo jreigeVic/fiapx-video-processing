@@ -45,6 +45,6 @@ A combinacao atende aos pilares de logs, metricas e tracing distribuido definido
 
 ## Referencias
 
-- docs/HLD/12 - Observability.md
-- docs/HLD/05 - Quality Attributes.md
+- docs/HLD/12-observability.md
+- docs/HLD/05-quality-attributes.md
 - .ai/rules/security-rules.md

@@ -46,7 +46,7 @@ Java 21 e Spring Boot 3.x atendem aos requisitos de manutenibilidade, testabilid
 
 ## Referencias
 
-- docs/HLD/06 - Architecture Overview.md
-- docs/HLD/14 - CI-CD.md
+- docs/HLD/06-architecture-overview.md
+- docs/HLD/14-ci-cd.md
 - .ai/context/stack.md
 - .ai/rules/coding-rules.md

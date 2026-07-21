@@ -165,7 +165,7 @@ Essa abordagem reduz impactos entre domínios e facilita a evolução da platafo
 | SonarQube Cloud | Análise de qualidade |
 | Trivy | Análise de vulnerabilidades |
 | Docker | Empacotamento da aplicação |
-| GitHub Container Registry | Armazenamento das imagens |
+| Amazon ECR | Armazenamento das imagens (Epic 010 - `infrastructure/terraform/ecr.tf`; GHCR foi a opção original considerada, mas ECR é o registry provisionado de fato) |
 | Kubernetes | Implantação dos microsserviços |
 
 ---

@@ -45,6 +45,6 @@ A pipeline automatizada garante qualidade, seguranca, reproducibilidade e entreg
 
 ## Referencias
 
-- docs/HLD/14 - CI-CD.md
-- docs/HLD/10 - Deployment Architecture.md
+- docs/HLD/14-ci-cd.md
+- docs/HLD/10-deployment-architecture.md
 - .ai/rules/git-rules.md

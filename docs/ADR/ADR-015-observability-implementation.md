@@ -26,7 +26,7 @@ Nenhum epic do backlog havia retomado a ADR-008 ate o roadmap final de fechament
 
 - **APM/aplicacao**: agente Java do OpenTelemetry (auto-instrumentacao), embutido nas imagens Docker dos 4 servicos, sempre presente mas inerte por padrao (`OTEL_TRACES_EXPORTER=none` etc. no Dockerfile) - o comportamento em `docker-compose`/local/CI nao muda. O Helm (`infrastructure/helm/microservice`) liga a exportacao via variaveis `OTEL_*` apontando para o endpoint OTLP do New Relic (`https://otlp.nr-data.net:4318`), autenticado com a License Key guardada em `fiapx-newrelic-license` (Secret criado em `infrastructure/helm/cluster-setup`, Epic 009).
 - **Infraestrutura/cluster**: addon gerenciado do EKS `amazon-cloudwatch-observability` (`infrastructure/terraform/eks.tf`), cobrindo Container Insights. Sem `service_account_role_arn`: os pods do addon rodam sob o instance profile do node (LabRole), mesmo caminho de credenciais que os pods da aplicacao ja usam - sem IRSA/OIDC (bloqueado no AWS Academy).
-- Prometheus/Grafana/Micrometer standalone avaliados e descartados por redundancia frente ao New Relic, dado o escopo do hackathon - registrado tambem em `docs/HLD/12 - Observability.md`.
+- Prometheus/Grafana/Micrometer standalone avaliados e descartados por redundancia frente ao New Relic, dado o escopo do hackathon - registrado tambem em `docs/HLD/12-observability.md`.
 
 ## Justificativa
 
@@ -51,6 +51,6 @@ Preserva o texto da ADR-008 (OpenTelemetry como instrumentacao, New Relic como A
 
 - docs/ADR/ADR-008-observability.md
 - docs/ADR/ADR-011-microservice-scaffolding.md
-- docs/HLD/12 - Observability.md
+- docs/HLD/12-observability.md
 - infrastructure/helm/microservice
 - infrastructure/terraform/eks.tf
