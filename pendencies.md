@@ -101,19 +101,23 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 **Critério para considerar resolvida:** A `cd.yml` run completes green end-to-end, including the smoke test asserting `PROCESSED` and a successful download URL.
 
-### [Epic 016 - Observability] New Relic account/License Key needed
+### [Epic 016 - Observability] New Relic License Key obtained but not wired into the cluster
 
-**Epic/Task afetadas:** Epic 016 (Observability) - task #23, `fiapx-newrelic-license` Secret value.
+**Status (2026-07-21): account created, key stored in the wrong place for the current pipeline design.** User created the New Relic account and added the key as the GitHub Actions repository secret `NEW_RELIC_LICENSE_KEY` (confirmed via `gh secret list`, added 2026-07-19). No repository variable was added alongside it.
 
-**Descrição do bloqueio:** All the code/infra wiring for OTLP export to New Relic is implemented and verified (OTel Java agent in all 4 images, verified inert in `docker-compose-smoke`; Helm's `observability` block, verified rendering correctly; `fiapx-newrelic-license` Secret scaffolded in `cluster-setup`, currently blank). The actual license key requires a New Relic account, which is an external, manual step for the user (cannot be created on their behalf).
+**Epic/Task afetadas:** Epic 016 (Observability) - task #23, `fiapx-newrelic-license` Kubernetes Secret value (`infrastructure/helm/cluster-setup`).
 
-**Causa raiz:** External dependency - not something resolvable from within this session.
+**Descrição do bloqueio:** All the code/infra wiring for OTLP export to New Relic is implemented and verified (OTel Java agent in all 4 images, verified inert in `docker-compose-smoke`; Helm's `observability` block, verified rendering correctly). But `NEW_RELIC_LICENSE_KEY` as a **GitHub Actions secret** is not automatically the same thing as the **Kubernetes Secret** `fiapx-newrelic-license` that the pods actually read from - nothing in `cd.yml` currently reads this GitHub secret or writes it into the cluster, because `cluster-setup` (which owns that Kubernetes Secret) is deliberately excluded from CD (RDS master password only exists in the operator's local tfstate, so that release stays a manual, one-time-per-environment step - see `infrastructure/helm/README.md`).
 
-**Impacto:** Until the Secret is populated, `OTEL_EXPORTER_OTLP_HEADERS` resolves to `api-key=` (empty), so New Relic will reject the OTLP payloads (traces/metrics/logs are attempted but not accepted) - no functional gap in the application itself, but no dashboard/service-map evidence until this is set.
+**Causa raiz:** Design gap, not a missing credential anymore. Two ways to close it, to decide with the user next session:
+1. **Manual** (matches the existing `cluster-setup` pattern): operator runs `helm upgrade cluster-setup ./cluster-setup --reuse-values --set newRelic.licenseKey=<key>` by hand, pasting the value from the New Relic UI (or from `gh secret list` - GitHub doesn't expose secret *values* via API/CLI once set, so the user would need to paste the key itself, not read it back from GitHub).
+2. **Automated via CD**: add a small step/job to `cd.yml` that reads `secrets.NEW_RELIC_LICENSE_KEY` and updates the Kubernetes Secret directly (e.g. `kubectl create secret generic fiapx-newrelic-license --from-literal=NEW_RELIC_LICENSE_KEY=... --dry-run=client -o yaml | kubectl apply -f -`), decoupled from the rest of `cluster-setup`'s RDS-dependent values - this is an architectural extension to the CD pipeline design and needs the user's explicit approval before implementing (not a pure bugfix).
 
-**Pré-requisitos para retomada:** User creates a free New Relic account and obtains a License Key.
+**Impacto:** Until either path is done, `fiapx-newrelic-license` stays blank in the cluster, so `OTEL_EXPORTER_OTLP_HEADERS` resolves to `api-key=` (empty) and New Relic rejects the OTLP payloads - no functional gap in the application itself, but no dashboard/service-map evidence until this is set.
 
-**Critério para considerar resolvida:** `kubectl create secret` (or a `cluster-setup` re-install with the real key in its values) updates `fiapx-newrelic-license`, and the New Relic UI shows incoming data from at least one of the 4 services.
+**Pré-requisitos para retomada:** Decide option 1 vs 2 with the user (next session opens with this), then a live cluster to apply it to (same AWS Academy session dependency as the other Epic 009/010 items).
+
+**Critério para considerar resolvida:** The real key reaches `fiapx-newrelic-license` in the cluster, and the New Relic UI shows incoming data from at least one of the 4 services.
 
 ### [Epic 014 - Documentation & Test Alignment] LocalStack S3/SNS/SQS integration tests - RESOLVED 2026-07-21
 
