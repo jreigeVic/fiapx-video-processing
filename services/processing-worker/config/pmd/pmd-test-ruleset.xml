@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<ruleset name="fiapx-identity-test"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>
+        Same intent as pmd-ruleset.xml, with additional exclusions for rules
+        that misfire on modern JUnit 5/AssertJ/ArchUnit/Testcontainers test
+        code: ArchUnit's @ArchTest static fields aren't @Test methods,
+        Testcontainers' @Container field must be static, narrative-style
+        integration tests intentionally assert several facets of one flow,
+        and readable literal package/field names in test fixtures aren't a
+        real duplication smell.
+    </description>
+
+    <rule ref="category/java/bestpractices.xml">
+        <exclude name="GuardLogStatement"/>
+        <exclude name="JUnitTestsShouldIncludeAssert"/>
+        <exclude name="JUnitTestContainsTooManyAsserts"/>
+    </rule>
+    <rule ref="category/java/design.xml">
+        <exclude name="LawOfDemeter"/>
+        <exclude name="DataClass"/>
+        <exclude name="SignatureDeclareThrowsException"/>
+        <exclude name="MutableStaticState"/>
+    </rule>
+    <rule ref="category/java/errorprone.xml">
+        <exclude name="MissingSerialVersionUID"/>
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
+        <exclude name="TestClassWithoutTestCases"/>
+        <exclude name="AvoidDuplicateLiterals"/>
+    </rule>
+    <rule ref="category/java/multithreading.xml"/>
+    <rule ref="category/java/performance.xml"/>
+    <rule ref="category/java/security.xml"/>
+</ruleset>

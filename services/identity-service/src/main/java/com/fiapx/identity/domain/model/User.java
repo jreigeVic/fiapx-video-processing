@@ -26,7 +26,8 @@ public final class User {
         return new User(UUID.randomUUID(), name.trim(), email, passwordHash, Instant.now());
     }
 
-    public static User reconstruct(UUID id, String name, Email email, PasswordHash passwordHash, Instant createdAt) {
+    public static User reconstruct(
+            UUID id, String name, Email email, PasswordHash passwordHash, Instant createdAt) {
         return new User(id, name, email, passwordHash, createdAt);
     }
 

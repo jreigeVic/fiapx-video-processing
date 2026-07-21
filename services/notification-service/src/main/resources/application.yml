@@ -10,6 +10,16 @@ flyway:
   enabled: true
   locations: classpath:db/migration
 
+fiapx:
+  aws:
+    region: ${AWS_REGION:us-east-1}
+    endpoint-override: ${AWS_ENDPOINT_URL:}
+    ses:
+      sender: ${NOTIFICATION_SENDER_EMAIL:no-reply@fiapx.local}
+    sqs:
+      notification-queue: ${NOTIFICATION_QUEUE:notification-queue}
+      poll-delay-ms: ${NOTIFICATION_POLL_DELAY_MS:5000}
+      consumer-enabled: ${NOTIFICATION_CONSUMER_ENABLED:true}
+
 server:
   port: ${PORT:8084}
-

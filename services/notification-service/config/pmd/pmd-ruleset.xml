@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<ruleset name="fiapx-notification"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>
+        Complexity, dead-code and bug-pattern gate. Excludes PMD's
+        `documentation` category (Javadoc requirements conflict with this
+        project's no-comments-unless-needed convention) and `codestyle`
+        category (already covered by Spotless/Checkstyle) to avoid
+        triple-reporting the same finding.
+    </description>
+
+    <rule ref="category/java/bestpractices.xml">
+        <!-- Spring @Bean factory methods commonly return interfaces/have
+             unused constructor parameters injected by the container. -->
+        <exclude name="GuardLogStatement"/>
+    </rule>
+    <rule ref="category/java/design.xml">
+        <!-- Fires on ordinary getter chains (e.g. user.getEmail()) in
+             mappers/adapters - too strict for this layered architecture,
+             where crossing a layer boundary via one accessor call is the
+             normal, intended shape. -->
+        <exclude name="LawOfDemeter"/>
+        <!-- Fires on JPA entities, config-properties classes and value
+             objects, which are supposed to be data-holders by design in
+             this architecture (see docs/LLD/shared-architecture.md). -->
+        <exclude name="DataClass"/>
+        <!-- Spring Security's HttpSecurity#build() itself declares
+             `throws Exception`; every SecurityFilterChain @Bean method
+             must propagate it. -->
+        <exclude name="SignatureDeclareThrowsException"/>
+        <!-- The Spring @Configuration composition root wires every use
+             case/port/adapter in the service by design (that is its whole
+             job) - high import count, coupling and method count there is
+             the intended shape, not a smell. -->
+        <exclude name="ExcessiveImports"/>
+        <exclude name="CouplingBetweenObjects"/>
+        <exclude name="TooManyMethods"/>
+        <!-- Broad catches in message consumers (SQS polling loops) are
+             deliberate: one malformed/unexpected message must never crash
+             the poller or block the rest of the batch. -->
+        <exclude name="AvoidCatchingGenericException"/>
+    </rule>
+    <rule ref="category/java/errorprone.xml">
+        <!-- Java records intentionally have no explicit constructor. -->
+        <exclude name="MissingSerialVersionUID"/>
+        <!-- Deliberate record-like VO convention: field `value`, accessor
+             `value()`, matching Java's own record accessor naming. -->
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
+        <!-- Clearing a field back to null on a domain state transition
+             (e.g. a video that failed then later succeeds on retry) is
+             intentional business logic, not a smell. -->
+        <exclude name="NullAssignment"/>
+    </rule>
+    <rule ref="category/java/multithreading.xml">
+        <!-- Correct, minimal tool for thread-safe lazy caching (e.g. a
+             resolved SNS/SQS ARN) without full synchronization overhead. -->
+        <exclude name="AvoidUsingVolatile"/>
+    </rule>
+    <rule ref="category/java/performance.xml"/>
+    <rule ref="category/java/security.xml"/>
+</ruleset>

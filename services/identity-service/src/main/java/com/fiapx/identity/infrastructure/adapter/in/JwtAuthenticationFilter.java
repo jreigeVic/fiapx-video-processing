@@ -1,6 +1,7 @@
 package com.fiapx.identity.infrastructure.adapter.in;
 
 import com.fiapx.identity.application.ports.out.TokenProviderPort;
+import com.fiapx.identity.domain.exception.InvalidAccessTokenException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,16 +25,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String header = request.getHeader(AUTHORIZATION_HEADER);
         if (header != null && header.startsWith(BEARER_PREFIX)) {
             String token = header.substring(BEARER_PREFIX.length());
             try {
                 UUID userId = tokenProviderPort.validateAndGetUserId(token);
-                var authentication = new UsernamePasswordAuthenticationToken(userId, null, List.of());
+                var authentication =
+                        new UsernamePasswordAuthenticationToken(userId, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } catch (RuntimeException ex) {
+            } catch (InvalidAccessTokenException ex) {
                 SecurityContextHolder.clearContext();
             }
         }

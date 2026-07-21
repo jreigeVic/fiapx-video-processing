@@ -15,8 +15,10 @@ public class LogoutUseCase {
 
     public void execute(UUID authenticatedUserId, String rawRefreshToken) {
         String tokenHash = RefreshToken.hash(rawRefreshToken);
-        RefreshToken existing = refreshTokenRepositoryPort.findByTokenHash(tokenHash)
-                .orElseThrow(InvalidRefreshTokenException::new);
+        RefreshToken existing =
+                refreshTokenRepositoryPort
+                        .findByTokenHash(tokenHash)
+                        .orElseThrow(InvalidRefreshTokenException::new);
 
         if (!existing.getUserId().equals(authenticatedUserId)) {
             throw new InvalidRefreshTokenException();

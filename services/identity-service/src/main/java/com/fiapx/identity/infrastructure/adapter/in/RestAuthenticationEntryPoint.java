@@ -1,7 +1,7 @@
 package com.fiapx.identity.infrastructure.adapter.in;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fiapx.identity.api.response.ErrorResponse;
+import com.fiapx.identity.application.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -15,14 +15,18 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+    public void commence(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AuthenticationException authException)
             throws IOException {
-        ErrorResponse body = new ErrorResponse(
-                Instant.now(),
-                HttpServletResponse.SC_UNAUTHORIZED,
-                "UNAUTHORIZED",
-                "Missing or invalid token",
-                request.getRequestURI());
+        ErrorResponse body =
+                new ErrorResponse(
+                        Instant.now(),
+                        HttpServletResponse.SC_UNAUTHORIZED,
+                        "UNAUTHORIZED",
+                        "Missing or invalid token",
+                        request.getRequestURI());
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(response.getWriter(), body);

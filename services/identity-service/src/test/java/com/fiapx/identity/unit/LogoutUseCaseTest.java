@@ -18,7 +18,8 @@ import org.junit.jupiter.api.Test;
 
 class LogoutUseCaseTest {
 
-    private final RefreshTokenRepositoryPort refreshTokenRepositoryPort = mock(RefreshTokenRepositoryPort.class);
+    private final RefreshTokenRepositoryPort refreshTokenRepositoryPort =
+            mock(RefreshTokenRepositoryPort.class);
     private final LogoutUseCase useCase = new LogoutUseCase(refreshTokenRepositoryPort);
 
     @Test

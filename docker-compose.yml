@@ -18,7 +18,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_MULTIPLE_DATABASES:-auth_db,video_db,notification_db}
+      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_MULTIPLE_DATABASES:-auth_db,video_db,processing_db,notification_db}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -40,13 +40,14 @@ services:
     env_file:
       - .env
     environment:
-      SERVICES: ${LOCALSTACK_SERVICES:-s3,sns,sqs}
+      SERVICES: ${LOCALSTACK_SERVICES:-s3,sns,sqs,ses}
       DEBUG: ${LOCALSTACK_DEBUG:-0}
       PERSISTENCE: ${LOCALSTACK_PERSISTENCE:-1}
     ports:
       - "${LOCALSTACK_PORT:-4566}:4566"
     volumes:
       - localstack_data:/var/lib/localstack
+      - ./infrastructure/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh:ro
     networks:
       - fiapx-network
     healthcheck:
@@ -55,3 +56,123 @@ services:
       timeout: 5s
       retries: 8
       start_period: 20s
+
+  identity-service:
+    build:
+      context: ./services/identity-service
+    container_name: fiapx-identity-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth_db
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_DEV_ONLY_SECRET_KEY_MIN_32_BYTES_LONG_0000}
+      PORT: 8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fiapx-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  video-service:
+    build:
+      context: ./services/video-service
+    container_name: fiapx-video-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/video_db
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_DEV_ONLY_SECRET_KEY_MIN_32_BYTES_LONG_0000}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ENDPOINT_URL: http://localstack:4566
+      VIDEO_S3_BUCKET: fiapx-videos
+      PORT: 8082
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    networks:
+      - fiapx-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  processing-worker:
+    build:
+      context: ./services/processing-worker
+    container_name: fiapx-processing-worker
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/processing_db
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ENDPOINT_URL: http://localstack:4566
+      VIDEO_S3_BUCKET: fiapx-videos
+      PORT: 8083
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    networks:
+      - fiapx-network
+    # No HTTP server by design (docs/LLD/processing-worker.md: "Nao ha
+    # controller HTTP obrigatorio") - it's an SQS-polling worker only, so
+    # there's no actuator/health endpoint to probe. Liveness is a plain
+    # process check instead.
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f app.jar || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+    container_name: fiapx-notification-service
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/notification_db
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ENDPOINT_URL: http://localstack:4566
+      PORT: 8084
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    networks:
+      - fiapx-network
+    # No HTTP server by design (docs/LLD/notification-service.md: "Nao ha
+    # endpoint HTTP de negocio") - it's an SQS-polling worker only, so
+    # there's no actuator/health endpoint to probe. Liveness is a plain
+    # process check instead.
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f app.jar || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s

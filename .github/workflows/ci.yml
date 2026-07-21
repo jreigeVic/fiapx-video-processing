@@ -18,9 +18,30 @@ permissions:
   security-events: write
 
 jobs:
+  # Lints the shared OpenAPI contract once (not per-service - it's a single
+  # file covering Identity and Video). Fast (~15-20s) and fails the build on
+  # a broken/invalid spec, catching contract mistakes before they reach a
+  # service implementation.
+  openapi-lint:
+    name: Lint OpenAPI contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Lint docs/api/openapi.yaml (Redocly)
+        run: npx --yes @redocly/cli@1.25.0 lint docs/api/openapi.yaml
+
   build-test-analyze:
     name: Build, test and analyze (${{ matrix.service }})
     runs-on: ubuntu-latest
+    env:
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
     strategy:
       fail-fast: false
       matrix:
@@ -62,9 +83,27 @@ jobs:
             echo "GRADLE_CMD=gradle" >> "$GITHUB_ENV"
           fi
 
+      # build-mode: manual - CodeQL traces the compiler invocations made by
+      # our own "Build and run unit tests" step below instead of running a
+      # second, separate build (which `autobuild` would do), so this adds no
+      # extra compile time per service.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java
+          build-mode: manual
+
+      # `build` runs `check`, which now also runs the ArchUnit architecture
+      # tests (src/test/.../architecture) as plain JUnit 5 tests - no
+      # separate pipeline step needed for them.
       - name: Build and run unit tests
         working-directory: services/${{ matrix.service }}
         run: $GRADLE_CMD build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: codeql-${{ matrix.service }}
 
       - name: Generate JaCoCo coverage report
         working-directory: services/${{ matrix.service }}
@@ -78,10 +117,54 @@ jobs:
           path: services/${{ matrix.service }}/build/reports/jacoco/test/jacocoTestReport.xml
           if-no-files-found: warn
 
+      # Report-only (com.github.ben-manes.versions): lists outdated
+      # dependencies, never updates anything and never fails the build.
+      # Prioritizing LTS is a human decision made from this report.
+      - name: Check for outdated dependencies (report only)
+        working-directory: services/${{ matrix.service }}
+        run: $GRADLE_CMD dependencyUpdates
+
+      - name: Upload dependency freshness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-updates-${{ matrix.service }}
+          path: services/${{ matrix.service }}/build/dependencyUpdates/report.txt
+          if-no-files-found: warn
+
+      # Report-only Software Composition Analysis (OWASP Dependency-Check).
+      # Skipped (not failed) when NVD_API_KEY isn't configured: without a
+      # key the NVD feed is severely rate-limited, which would make this
+      # step's duration unpredictable and risk inflating pipeline time.
+      # Caches the NVD vulnerability database across runs to keep the
+      # (keyed) case fast too.
+      - name: Cache OWASP Dependency-Check NVD database
+        if: env.NVD_API_KEY != ''
+        uses: actions/cache@v4
+        with:
+          path: services/${{ matrix.service }}/build/dependency-check-data
+          key: owasp-dep-check-nvd-${{ matrix.service }}-${{ github.run_id }}
+          restore-keys: |
+            owasp-dep-check-nvd-${{ matrix.service }}-
+
+      - name: OWASP Dependency-Check (report only)
+        if: env.NVD_API_KEY != ''
+        working-directory: services/${{ matrix.service }}
+        run: $GRADLE_CMD dependencyCheckAnalyze
+
+      - name: Upload OWASP Dependency-Check report
+        if: always() && env.NVD_API_KEY != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-${{ matrix.service }}
+          path: services/${{ matrix.service }}/build/reports/dependency-check-report.html
+          if-no-files-found: warn
+
       # SonarCloud project key convention: <SONAR_PROJECT_KEY>-<service-name>.
       # One SonarCloud project per microservice, sharing a single organization.
       # Skipped (not failed) when any of the three secrets isn't configured yet.
       - name: SonarCloud analysis
+        id: sonar
         working-directory: services/${{ matrix.service }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -91,12 +174,30 @@ jobs:
         run: |
           if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_ORGANIZATION" ] || [ -z "$SONAR_PROJECT_KEY" ]; then
             echo "SONAR_TOKEN, SONAR_ORGANIZATION or SONAR_PROJECT_KEY not configured, skipping SonarCloud analysis."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          echo "skipped=false" >> "$GITHUB_OUTPUT"
           $GRADLE_CMD sonar \
             -Dsonar.token="$SONAR_TOKEN" \
             -Dsonar.organization="$SONAR_ORGANIZATION" \
             -Dsonar.projectKey="${SONAR_PROJECT_KEY}-${{ matrix.service }}"
+
+      # Enforces the SonarCloud Quality Gate (bugs, vulnerabilities, code
+      # smells, duplication, coverage, maintainability/reliability/security
+      # ratings - whatever the project's Quality Gate is configured to
+      # check). The `sonar` task above only *submits* analysis; this polls
+      # SonarCloud for the server-side verdict and fails the build if it
+      # isn't OK. Skipped alongside the analysis step when Sonar isn't
+      # configured yet, so it never blocks PRs before SonarCloud is wired up.
+      - name: Check SonarCloud Quality Gate
+        if: steps.sonar.outputs.skipped == 'false'
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          scanMetadataReportFile: services/${{ matrix.service }}/build/sonar/report-task.txt
 
       - name: Build Docker image
         run: docker build -t fiapx/${{ matrix.service }}:ci -f services/${{ matrix.service }}/Dockerfile services/${{ matrix.service }}
@@ -118,3 +219,89 @@ jobs:
         with:
           sarif_file: trivy-${{ matrix.service }}.sarif
           category: trivy-${{ matrix.service }}
+
+  # Boots the full stack (Postgres, LocalStack, all four services) via the
+  # same docker-compose.yml used for local development and waits for every
+  # container's own healthcheck to report healthy. Runs only after every
+  # service has already built/tested/passed above - this job's purpose is
+  # validating the services actually start and connect to their real
+  # dependencies together, not re-running unit tests.
+  docker-compose-smoke:
+    name: Docker Compose smoke test
+    runs-on: ubuntu-latest
+    needs: build-test-analyze
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build service jars
+        run: |
+          for service in identity-service video-service processing-worker notification-service; do
+            (cd "services/$service" && chmod +x ./gradlew && ./gradlew bootJar)
+          done
+
+      - name: Create .env from example
+        run: cp .env.example .env
+
+      - name: Start the stack
+        run: docker compose up -d --build
+
+      - name: Wait for all services to be healthy
+        run: |
+          containers="fiapx-postgres fiapx-localstack fiapx-identity-service fiapx-video-service fiapx-processing-worker fiapx-notification-service"
+          for i in $(seq 1 60); do
+            all_healthy=true
+            for c in $containers; do
+              status=$(docker inspect --format='{{.State.Health.Status}}' "$c" 2>/dev/null || echo "missing")
+              if [ "$status" != "healthy" ]; then
+                all_healthy=false
+              fi
+            done
+            if [ "$all_healthy" = "true" ]; then
+              echo "All containers healthy"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Timed out waiting for containers to become healthy"
+          docker compose ps
+          exit 1
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      # Dumps the actual last-run healthcheck output (docker's own probe,
+      # not a re-derived guess) plus a manual in-container probe, since the
+      # app container logs alone haven't been enough to diagnose prior
+      # failures of this job.
+      - name: Diagnose unhealthy containers on failure
+        if: failure()
+        run: |
+          declare -A ports=(
+            [fiapx-identity-service]=8081
+            [fiapx-video-service]=8082
+            [fiapx-processing-worker]=8083
+            [fiapx-notification-service]=8084
+          )
+          for c in "${!ports[@]}"; do
+            echo "=== $c: docker's own healthcheck history ==="
+            docker inspect --format='{{json .State.Health}}' "$c" || true
+            echo
+            echo "=== $c: process list ==="
+            docker exec "$c" ps aux || true
+            echo
+            echo "=== $c: manual wget probe ==="
+            docker exec "$c" wget -O- "http://localhost:${ports[$c]}/actuator/health" || true
+            echo
+          done
+
+      - name: Tear down the stack
+        if: always()
+        run: docker compose down -v

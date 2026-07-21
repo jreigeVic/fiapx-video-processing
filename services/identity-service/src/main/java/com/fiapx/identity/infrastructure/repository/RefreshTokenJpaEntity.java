@@ -11,8 +11,7 @@ import java.util.UUID;
 @Table(name = "refresh_tokens")
 public class RefreshTokenJpaEntity {
 
-    @Id
-    private UUID id;
+    @Id private UUID id;
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;
@@ -29,10 +28,15 @@ public class RefreshTokenJpaEntity {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    protected RefreshTokenJpaEntity() {
-    }
+    protected RefreshTokenJpaEntity() {}
 
-    public RefreshTokenJpaEntity(UUID id, UUID userId, String tokenHash, Instant expiresAt, boolean revoked, Instant createdAt) {
+    public RefreshTokenJpaEntity(
+            UUID id,
+            UUID userId,
+            String tokenHash,
+            Instant expiresAt,
+            boolean revoked,
+            Instant createdAt) {
         this.id = id;
         this.userId = userId;
         this.tokenHash = tokenHash;

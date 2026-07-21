@@ -1,10 +1,31 @@
 spring:
   application:
     name: processing-worker
+  datasource:
+    url: jdbc:postgresql://localhost:5432/processing_db
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
 
 flyway:
   enabled: true
   locations: classpath:db/migration
+
+fiapx:
+  aws:
+    region: ${AWS_REGION:us-east-1}
+    endpoint-override: ${AWS_ENDPOINT_URL:}
+    s3:
+      bucket: ${VIDEO_S3_BUCKET:fiapx-videos}
+    sns:
+      video-processed-topic: ${VIDEO_PROCESSED_TOPIC:video-processed}
+      video-failed-topic: ${VIDEO_FAILED_TOPIC:video-failed}
+    sqs:
+      video-processing-queue: ${VIDEO_PROCESSING_QUEUE:video-processing-queue}
+      poll-delay-ms: ${VIDEO_PROCESSING_POLL_DELAY_MS:5000}
+      consumer-enabled: ${VIDEO_PROCESSING_CONSUMER_ENABLED:true}
+  ffmpeg:
+    binary: ${FFMPEG_BINARY:ffmpeg}
+    frame-rate: ${FFMPEG_FRAME_RATE:1}
 
 server:
   port: ${PORT:8083}

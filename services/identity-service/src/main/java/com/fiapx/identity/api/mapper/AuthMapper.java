@@ -7,8 +7,7 @@ import com.fiapx.identity.domain.model.User;
 
 public final class AuthMapper {
 
-    private AuthMapper() {
-    }
+    private AuthMapper() {}
 
     public static UserResponse toUserResponse(User user) {
         return new UserResponse(user.getId(), user.getName(), user.getEmail().value());
