@@ -130,6 +130,20 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 **Critério para considerar resolvida:** Each of the 3 services has at least one LocalStack-backed integration test for its AWS adapter(s).
 
+### [Epic 013 - Demo Frontend] Not exercised against a live backend
+
+**Epic/Task afetadas:** Epic 013 (Demo Frontend) - `frontend/index.html`.
+
+**Descrição do bloqueio:** The page was verified statically (JS syntax via `node --check`, served correctly by a local HTTP server) but never actually driven through the real login -> upload -> status -> download flow against a running identity-service/video-service, since this session has no Docker/cluster access.
+
+**Causa raiz:** Same underlying constraint as the Epic 009/010 blockers - no local Docker, no merged `main` yet for a full stack to exist.
+
+**Impacto:** Field-name/behavior assumptions (e.g. `DownloadUrlResponse.url`, `VideoResponse.downloadAvailable`, CORS headers actually reaching the browser) are verified by reading the real DTOs, but not by an actual browser session.
+
+**Pré-requisitos para retomada:** A running stack (`docker compose up` locally, or the deployed cluster once Epic 009/010 clear) plus `IDENTITY_CORS_ALLOWED_ORIGINS`/`VIDEO_CORS_ALLOWED_ORIGINS` set to the frontend's origin.
+
+**Critério para considerar resolvida:** A manual run through the 4-step flow in a real browser against a real backend completes without console errors.
+
 ---
 
 *Recorded during TASK-002.6 (Architecture Readiness Review). Do not act on these items outside of an explicitly approved task.*
