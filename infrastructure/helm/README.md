@@ -58,9 +58,11 @@ HLD-14 (CI/CD) - `helm upgrade identity-service` never touches the other
    ```bash
    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
    ```
-4. Images already pushed to ECR for all 4 services (CD phase / manual
-   `docker push`, per `infrastructure/terraform` output
-   `ecr_repository_urls`).
+4. Images pushed to ECR for all 4 services. Dispatch the `build-push-ecr`
+   job of `.github/workflows/cd.yml` (`gh workflow run cd.yml`) - it needs
+   3 repository secrets refreshed from the active AWS Academy lab session
+   (credentials rotate every ~4h): `AWS_ACCESS_KEY_ID`,
+   `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`.
 
 ## Deploy order
 

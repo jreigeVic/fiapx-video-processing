@@ -1,0 +1,65 @@
+name: CD - Deploy
+
+# Manual only: AWS Academy session credentials rotate every ~4h, so there
+# is no long-lived AWS identity to trigger this automatically on push.
+# Before dispatching, refresh the 3 repository secrets below from the
+# active Academy lab session (see infrastructure/helm/README.md).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Builds each service's jar and pushes its image to the ECR repository
+  # Terraform already provisioned (infrastructure/terraform/ecr.tf:
+  # fiapx/<service-name>). Tagged by both the commit SHA (traceability) and
+  # `latest` (what the Helm values default to).
+  build-push-ecr:
+    name: Build and push (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - identity-service
+          - video-service
+          - processing-worker
+          - notification-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Build jar
+        working-directory: services/${{ matrix.service }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew bootJar
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        working-directory: services/${{ matrix.service }}
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+        run: |
+          image="$REGISTRY/fiapx/${{ matrix.service }}"
+          docker build -t "$image:${{ github.sha }}" -t "$image:latest" .
+          docker push "$image:${{ github.sha }}"
+          docker push "$image:latest"

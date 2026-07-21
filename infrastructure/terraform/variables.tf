@@ -70,3 +70,9 @@ variable "ses_recipient_emails" {
   type        = list(string)
   default     = []
 }
+
+variable "ses_manage_identities" {
+  description = "Whether Terraform creates/verifies SES email identities. Disabled by default: AWS Academy's voclabs role denies ses:VerifyEmailIdentity (AccessDenied) - see ADR-016. Set true only in an account where the IAM identity has this permission."
+  type        = bool
+  default     = false
+}
