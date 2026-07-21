@@ -37,6 +37,9 @@ infrastructure/helm/generated/
 .DS_Store
 Thumbs.db
 
+# Session continuity note (local working notes, not project documentation)
+SESSION-STATE.md
+
 # AI
 .ai/output/
 .ai

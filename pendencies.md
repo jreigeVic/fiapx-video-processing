@@ -71,34 +71,33 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 ### [Epic 009 - Kubernetes] Cannot push the 4 service images to ECR from this session
 
+**Status (2026-07-21): root cause resolved by merge, execution still pending.** PR #15 merged the full epic/007-013 stack into `main`, so `cd.yml` is now a registered, dispatchable workflow (confirmed via `gh workflow list`). What remains is simply running it with fresh AWS Academy session credentials.
+
 **Epic/Task afetadas:** Epic 009 (Kubernetes) - task #20, specifically installing the 4 `microservice` Helm releases (identity-service, video-service, processing-worker, notification-service). Blocks the same step in Epic 010 (CD Pipeline) if not resolved first.
 
-**Descrição do bloqueio:** The 4 Helm releases need their image already pushed to ECR (`infrastructure/terraform/ecr.tf`). Neither available path can produce that image right now:
-- `cd.yml`'s `build-push-ecr` job can only be triggered via `gh workflow run` / the Actions API once the workflow file exists on the repository's default branch (`main`) - GitHub does not expose `workflow_dispatch` for a workflow that only exists on a feature branch. `cd.yml` currently exists only on `epic/009-kubernetes` (stacked on `epic/015-security-hardening` / `epic/008-infrastructure-terraform`), none of which are merged to `main` yet.
-- No local Docker daemon is available in this session (`docker info` fails) to build and `docker push` the images directly.
+**Descrição do bloqueio:** The 4 Helm releases need their image already pushed to ECR (`infrastructure/terraform/ecr.tf`). No local Docker daemon is available in this session (`docker info` fails) to build and push directly, but this is no longer required now that `cd.yml`'s `build-push-ecr` job can be dispatched on `main`.
 
-**Causa raiz:** GitHub Actions `workflow_dispatch` discovery is scoped to the default branch; this repo's epic branches are not merged to `main` until Epic 017 per the original roadmap sequencing. Combined with no local Docker, there is currently no path to produce the 4 images without either (a) an early merge to `main`, or (b) Docker becoming available locally/remotely.
+**Causa raiz (histórica):** GitHub Actions `workflow_dispatch` discovery is scoped to the default branch; resolved by the 2026-07-21 merge to `main`.
 
-**Impacto:** The 4 `microservice` Helm releases cannot be installed yet. What *is* already deployed and verified on the real `fiapx-eks` cluster: `cluster-setup` release (namespace, DB/JWT/New-Relic secrets, DB bootstrap Job - all 4 logical databases created on the shared RDS instance), and `metrics-server`. Epic 009's kubectl evidence (`get pods`, `get svc`, `get hpa`, `top pods` for the 4 services) cannot be captured until the images exist.
+**Impacto:** The 4 `microservice` Helm releases still aren't installed. What *is* already deployed and verified on the real `fiapx-eks` cluster (2026-07-19 session): `cluster-setup` release (namespace, DB/JWT/New-Relic secrets, DB bootstrap Job - all 4 logical databases created on the shared RDS instance), `metrics-server`, and the `amazon-cloudwatch-observability` addon. That AWS Academy session's credentials have very likely expired (~4h window) and the cluster itself may no longer exist if the lab session ended.
 
-**Pré-requisitos para retomada:** One of:
-1. User approves merging `epic/008-infrastructure-terraform` → `epic/015-security-hardening` → `epic/009-kubernetes` into `main` (would make `cd.yml` dispatchable), or
-2. Local Docker becomes available in-session (user starts Docker Desktop), or
-3. User builds/pushes the 4 images through some other path of their choosing.
+**Pré-requisitos para retomada:** A fresh AWS Academy lab session: refresh the 3 GitHub secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`), confirm `terraform apply` state still matches reality (re-apply if the cluster was torn down), then `gh workflow run cd.yml`.
 
 **Critério para considerar resolvida:** All 4 ECR repositories (`fiapx/identity-service`, `fiapx/video-service`, `fiapx/processing-worker`, `fiapx/notification-service`) have at least one pushed image tag, and the 4 `microservice` Helm releases install and reach `Ready` on `fiapx-eks`.
 
 ### [Epic 010 - CD Pipeline] `deploy` job and E2E smoke test not verified against a real dispatch
 
+**Status (2026-07-21): root cause resolved by merge, execution still pending.** Same update as the Epic 009 entry above - `cd.yml` is dispatchable on `main` now; only a real run with fresh AWS credentials remains.
+
 **Epic/Task afetadas:** Epic 010 (CD Pipeline) - task #22, the `deploy` job and its smoke test in `.github/workflows/cd.yml`.
 
-**Descrição do bloqueio:** The `deploy` job (cluster health check, live AWS CLI env resolution, `helm upgrade --install` of the 4 releases, E2E smoke test) is written and passes static validation (`actionlint`, no findings), but has never actually run in GitHub Actions. Same root cause as the Epic 009 blocker above: `cd.yml` only exists on a feature branch, so `workflow_dispatch` can't discover it, and `deploy` additionally `needs: build-push-ecr`, which is itself blocked.
+**Descrição do bloqueio:** The `deploy` job (cluster health check, live AWS CLI env resolution, `helm upgrade --install` of the 4 releases, E2E smoke test) is written and passes static validation (`actionlint`, no findings), but has never actually run in GitHub Actions.
 
-**Causa raiz:** Same as the Epic 009 entry above (workflow_dispatch requires the file on `main`; no local Docker to build images as an alternative path).
+**Causa raiz (histórica):** Same as the Epic 009 entry (workflow_dispatch requires the file on `main`) - resolved.
 
 **Impacto:** No evidence yet that: the live AWS CLI lookups (RDS endpoint by instance identifier, S3 bucket by name prefix) return the expected values in a GitHub Actions runner's environment; `helm upgrade --install` succeeds end-to-end from a clean Actions runner (as opposed to this session's manual run, which already found and fixed one real bug - the `psql`/`PGDATABASE` issue in `cluster-setup`, so the `deploy` job's untested paths carry similar risk); the E2E smoke test's assumptions hold (LoadBalancer hostname becomes available within the 5-minute poll window, the register/login JSON field names match, `ffmpeg` is preinstalled on the `ubuntu-latest` runner image as expected).
 
-**Pré-requisitos para retomada:** Resolution of the Epic 009 blocker (main merge or alternative image path), then a real `gh workflow run cd.yml` dispatch.
+**Pré-requisitos para retomada:** A fresh AWS Academy lab session (same as Epic 009 above), then `gh workflow run cd.yml`.
 
 **Critério para considerar resolvida:** A `cd.yml` run completes green end-to-end, including the smoke test asserting `PROCESSED` and a successful download URL.
 
@@ -136,7 +135,7 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 **Descrição do bloqueio:** The page was verified statically (JS syntax via `node --check`, served correctly by a local HTTP server) but never actually driven through the real login -> upload -> status -> download flow against a running identity-service/video-service, since this session has no Docker/cluster access.
 
-**Causa raiz:** Same underlying constraint as the Epic 009/010 blockers - no local Docker, no merged `main` yet for a full stack to exist.
+**Causa raiz:** Same underlying constraint as the Epic 009/010 blockers - no local Docker and no deployed stack with real endpoints to point the page at yet (the `main` merge itself is done as of 2026-07-21; what's missing now is a fresh AWS Academy session to actually deploy).
 
 **Impacto:** Field-name/behavior assumptions (e.g. `DownloadUrlResponse.url`, `VideoResponse.downloadAvailable`, CORS headers actually reaching the browser) are verified by reading the real DTOs, but not by an actual browser session.
 
