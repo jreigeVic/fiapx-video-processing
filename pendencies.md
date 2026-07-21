@@ -115,19 +115,13 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 **Critério para considerar resolvida:** `kubectl create secret` (or a `cluster-setup` re-install with the real key in its values) updates `fiapx-newrelic-license`, and the New Relic UI shows incoming data from at least one of the 4 services.
 
-### [Epic 014 - Documentation & Test Alignment] LocalStack S3/SNS/SQS integration tests not written
+### [Epic 014 - Documentation & Test Alignment] LocalStack S3/SNS/SQS integration tests - RESOLVED 2026-07-21
 
-**Epic/Task afetadas:** Epic 014 - task 9 (partial). `docs/LLD/video-service.md`, `docs/LLD/processing-worker.md` and `docs/LLD/notification-service.md` also promise LocalStack-based integration tests for S3/SNS/SQS adapters, in addition to the Testcontainers persistence tests (written and committed).
+**Resolvido.** PR #17 (merged to `main`) added one LocalStack-backed integration test per service, instantiating adapters/consumers directly against a real LocalStack container: video-service (`S3StorageAdapter`, `SnsEventPublisherAdapter`, `ProcessingResultConsumer`), processing-worker (`S3StorageAdapter`, `SnsEventPublisherAdapter`, `VideoUploadedConsumer`), notification-service (`ProcessingNotificationConsumer` only - no S3/SNS use in that service). Verified green in CI with a real Docker daemon (all 4 `build-test-analyze` jobs + `docker-compose-smoke` passed).
 
-**Descrição do bloqueio:** Not a blocker in the operational sense (no external dependency) - just not attempted this pass, given the size of what was already covered (3 new Testcontainers tests + the doc-sync items) in a single session.
+**Bonus find:** the test exposed a real production bug - `processing-worker`'s `S3StorageAdapter.downloadOriginal()` always threw `FileAlreadyExistsException` against real S3 (`Files.createTempFile()` creates the destination file, and `S3Client#getObject(request, Path)` refuses to write to a path that already exists). Fixed in the same PR by deleting the reserved temp file before the download call. Existing unit tests never caught this because they mock `StoragePort`/`S3Client` entirely.
 
-**Causa raiz:** Scope/time, not an external impediment.
-
-**Impacto:** The S3/SNS/SQS adapters (`S3StorageAdapter`, `SnsEventPublisherAdapter`, SQS consumers) remain covered only by unit tests with mocked ports, not integration tests against a real (LocalStack-emulated) AWS API. Lower risk than the persistence gap, since the SDK calls themselves are thin and mostly exercised already via `docker-compose-smoke`'s full-stack boot.
-
-**Pré-requisitos para retomada:** None external - just pick this up as a follow-up task.
-
-**Critério para considerar resolvida:** Each of the 3 services has at least one LocalStack-backed integration test for its AWS adapter(s).
+**Critério de resolução:** atendido - each of the 3 services has at least one LocalStack-backed integration test for its AWS adapter(s), verified passing in CI.
 
 ### [Epic 013 - Demo Frontend] Not exercised against a live backend
 
