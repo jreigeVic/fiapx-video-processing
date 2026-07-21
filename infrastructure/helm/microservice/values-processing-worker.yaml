@@ -1,0 +1,51 @@
+# helm upgrade --install processing-worker ./microservice -n fiapx \
+#   -f values-processing-worker.yaml -f ../generated/values-processing-worker.aws.yaml
+#
+# The second -f is produced by ../render-aws-values.sh from `terraform output`
+# (RDS endpoint, S3 bucket name, region) - see infrastructure/helm/README.md.
+# It is never committed: only this file's static defaults are.
+
+nameOverride: processing-worker
+
+image:
+  repository: "REPLACE_WITH_ECR_REPOSITORY_URL" # terraform output ecr_repository_urls.processing-worker
+  tag: "latest"
+
+containerPort: 8083
+
+# No embedded HTTP server (docs/LLD/processing-worker.md) - it's an
+# SQS-polling worker only, so no Service ever routes traffic to it.
+service:
+  enabled: false
+
+probes:
+  http: false
+  processMatch: app.jar
+
+# Scales with the depth of video-processing-queue. HPA on CPU is the
+# initial strategy (ADR-005/HLD-13); KEDA queue-depth scaling is the
+# documented future evolution, not built here.
+autoscaling:
+  minReplicas: 1
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
+
+# ffmpeg jobs are CPU/memory heavier than the plain API services.
+resources:
+  requests:
+    cpu: 500m
+    memory: 768Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+envFrom:
+  - secretRef: fiapx-db-credentials
+
+# PORT and AWS_REGION are not set here: application.yml already defaults
+# them to 8083 / us-east-1. `env` is populated entirely by the generated
+# AWS overlay above (SPRING_DATASOURCE_URL, VIDEO_S3_BUCKET) - Helm
+# replaces list values wholesale across -f files, so it must not be split
+# across two files. Queue/topic names use the app's own defaults
+# (video-processing-queue, video-processed, video-failed), matching
+# infrastructure/terraform/messaging.tf, so no override needed.

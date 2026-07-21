@@ -1,0 +1,6 @@
+apiVersion: v2
+name: cluster-setup
+description: One-time FIAP X cluster resources - namespace, shared Secrets, and the RDS database bootstrap Job (ADR-014)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

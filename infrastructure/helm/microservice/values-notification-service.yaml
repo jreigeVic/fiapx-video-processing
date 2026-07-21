@@ -1,0 +1,39 @@
+# helm upgrade --install notification-service ./microservice -n fiapx \
+#   -f values-notification-service.yaml -f ../generated/values-notification-service.aws.yaml
+#
+# The second -f is produced by ../render-aws-values.sh from `terraform output`
+# (RDS endpoint, SES sender email, region) - see infrastructure/helm/README.md.
+# It is never committed: only this file's static defaults are.
+
+nameOverride: notification-service
+
+image:
+  repository: "REPLACE_WITH_ECR_REPOSITORY_URL" # terraform output ecr_repository_urls.notification-service
+  tag: "latest"
+
+containerPort: 8084
+
+# No embedded HTTP server (docs/LLD/notification-service.md) - it's an
+# SQS-polling worker only, so no Service ever routes traffic to it.
+service:
+  enabled: false
+
+probes:
+  http: false
+  processMatch: app.jar
+
+autoscaling:
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+envFrom:
+  - secretRef: fiapx-db-credentials
+
+# PORT and AWS_REGION are not set here: application.yml already defaults
+# them to 8084 / us-east-1. `env` is populated entirely by the generated
+# AWS overlay above (SPRING_DATASOURCE_URL, NOTIFICATION_SENDER_EMAIL) -
+# Helm replaces list values wholesale across -f files, so it must not be
+# split across two files. NOTIFICATION_QUEUE uses the app's own default
+# (notification-queue), matching infrastructure/terraform/messaging.tf,
+# so no override needed.

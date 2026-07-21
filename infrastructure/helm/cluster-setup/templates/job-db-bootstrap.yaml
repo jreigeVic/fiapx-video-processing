@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: fiapx-db-bootstrap
+  namespace: {{ .Values.namespace }}
+  annotations:
+    # Runs on every install/upgrade of this release, and the previous Job
+    # is deleted first since Job specs are immutable (Jobs can't be
+    # "updated" in place). Must complete before any service release starts
+    # (Flyway needs its database to already exist) - see
+    # infrastructure/helm/README.md for the required apply order.
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fiapx-db-bootstrap
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: db-bootstrap
+          image: {{ .Values.dbBootstrapJob.image }}
+          command: ["bash", "/scripts/init-databases.sh"]
+          env:
+            - name: PGHOST
+              value: {{ .Values.db.host | quote }}
+            - name: PGPORT
+              value: {{ .Values.db.port | quote }}
+            - name: POSTGRES_MULTIPLE_DATABASES
+              value: {{ join "," .Values.db.databases | quote }}
+            # psql reads PGUSER/PGPASSWORD, not the app-facing DB_USER/
+            # DB_PASSWORD keys the same secret exposes to service Deployments.
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: fiapx-db-credentials
+                  key: DB_USER
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fiapx-db-credentials
+                  key: DB_PASSWORD
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+      volumes:
+        - name: script
+          configMap:
+            name: fiapx-db-bootstrap-script

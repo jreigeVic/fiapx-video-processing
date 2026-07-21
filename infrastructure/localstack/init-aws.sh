@@ -36,6 +36,18 @@ create_queue_with_dlq "video-processing-queue"
 create_queue_with_dlq "video-results-queue"
 create_queue_with_dlq "notification-queue"
 
+# Must exceed the worker's 10-minute ffmpeg timeout: with the 30s default,
+# an in-flight message reappears on the queue mid-processing and another
+# poller (or replica) starts processing the same video, and legitimate slow
+# jobs burn through maxReceiveCount into the DLQ. Mirrors the
+# VisibilityTimeout Terraform sets on the real AWS queue. set-queue-attributes
+# (rather than create-queue attributes) keeps this idempotent against
+# LocalStack volumes persisted before this setting existed.
+echo "[init-aws] Raising video-processing-queue visibility timeout to 900s"
+awslocal sqs set-queue-attributes \
+  --queue-url "$(awslocal sqs get-queue-url --queue-name "video-processing-queue" --query QueueUrl --output text)" \
+  --attributes '{"VisibilityTimeout":"900"}' >/dev/null
+
 queue_arn() {
   awslocal sqs get-queue-attributes \
     --queue-url "$(awslocal sqs get-queue-url --queue-name "$1" --query QueueUrl --output text)" \

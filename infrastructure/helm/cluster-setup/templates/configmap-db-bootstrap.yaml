@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fiapx-db-bootstrap-script
+  namespace: {{ .Values.namespace }}
+data:
+  # Same idempotent logic as infrastructure/docker/postgres/init-databases.sh,
+  # adapted to connect to the remote RDS instance (ADR-014) via PG* env vars
+  # instead of running inside the postgres container itself.
+  init-databases.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Ensuring databases exist on $PGHOST:$PGPORT: $POSTGRES_MULTIPLE_DATABASES"
+    IFS=',' read -ra DATABASES <<< "$POSTGRES_MULTIPLE_DATABASES"
+    for db in "${DATABASES[@]}"; do
+      db_trimmed="$(echo -n "$db" | xargs)"
+      [ -z "$db_trimmed" ] && continue
+      echo "Ensuring database '$db_trimmed' exists"
+      psql -v ON_ERROR_STOP=1 <<EOSQL
+    SELECT 'CREATE DATABASE "$db_trimmed"'
+    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$db_trimmed')\gexec
+    EOSQL
+    done
+    echo "Databases ready"

@@ -1,0 +1,30 @@
+# Real values are never committed. Supply them at install time with
+# --set / --set-string, or with a git-ignored -f overlay
+# (see infrastructure/helm/README.md and render-aws-values.sh).
+
+namespace: fiapx
+
+db:
+  # host:port of the single RDS instance (terraform output rds_endpoint, ADR-014)
+  host: "REPLACE_WITH_RDS_ENDPOINT"
+  port: 5432
+  # terraform output rds_username
+  masterUser: "REPLACE_WITH_RDS_USERNAME"
+  # terraform output -raw rds_password (sensitive)
+  masterPassword: "REPLACE_WITH_RDS_PASSWORD"
+  # One logical database per service (ADR-004, ADR-014). Adding a service
+  # only requires appending here - db-bootstrap-job.yaml never changes.
+  databases:
+    - auth_db
+    - video_db
+    - processing_db
+    - notification_db
+
+# Shared between identity-service and video-service, which must agree on
+# the same signing key (video-service validates tokens identity-service
+# issues). Generate once, e.g.: openssl rand -base64 48
+jwt:
+  secret: "REPLACE_WITH_JWT_SECRET"
+
+dbBootstrapJob:
+  image: postgres:16
