@@ -53,6 +53,7 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.3.1")
     testImplementation("org.testcontainers:junit-jupiter:1.18.0")
     testImplementation("org.testcontainers:postgresql:1.18.0")
+    testImplementation("org.testcontainers:localstack:1.18.0")
     testImplementation("com.h2database:h2")
 
     // ArchUnit - traceability: enforces Hexagonal Architecture boundaries in CI (see src/test/.../architecture)

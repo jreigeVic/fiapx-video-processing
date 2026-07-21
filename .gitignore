@@ -6,6 +6,9 @@
 .gradle/
 build/
 
+# IDE-compiled output (e.g. VS Code Java extension)
+bin/
+
 # Maven
 target/
 

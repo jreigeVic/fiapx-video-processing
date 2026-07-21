@@ -23,6 +23,11 @@
         <exclude name="DataClass"/>
         <exclude name="SignatureDeclareThrowsException"/>
         <exclude name="MutableStaticState"/>
+        <!-- A LocalStack integration test touching S3+SNS+SQS legitimately
+             imports many AWS SDK request/response model classes across 3
+             services' worth of client surface - that's breadth of coverage,
+             not object coupling. -->
+        <exclude name="ExcessiveImports"/>
     </rule>
     <rule ref="category/java/errorprone.xml">
         <exclude name="MissingSerialVersionUID"/>
