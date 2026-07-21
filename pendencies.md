@@ -65,8 +65,6 @@ Same issue already noted below for identity-service now exists identically in vi
 
 ---
 
----
-
 ## Operational Blockers — Final Roadmap Execution (Epics 008-017)
 
 Per standing execution rule (approved 2026-07-19): operational blockers never stop roadmap execution. Each is documented here, its task is marked Blocked/Pending Validation (never completed), and work continues to the next roadmap item that doesn't depend on it. All entries below are reviewed together at Epic 017 (Final Release) consolidation.
@@ -89,6 +87,20 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 3. User builds/pushes the 4 images through some other path of their choosing.
 
 **Critério para considerar resolvida:** All 4 ECR repositories (`fiapx/identity-service`, `fiapx/video-service`, `fiapx/processing-worker`, `fiapx/notification-service`) have at least one pushed image tag, and the 4 `microservice` Helm releases install and reach `Ready` on `fiapx-eks`.
+
+### [Epic 010 - CD Pipeline] `deploy` job and E2E smoke test not verified against a real dispatch
+
+**Epic/Task afetadas:** Epic 010 (CD Pipeline) - task #22, the `deploy` job and its smoke test in `.github/workflows/cd.yml`.
+
+**Descrição do bloqueio:** The `deploy` job (cluster health check, live AWS CLI env resolution, `helm upgrade --install` of the 4 releases, E2E smoke test) is written and passes static validation (`actionlint`, no findings), but has never actually run in GitHub Actions. Same root cause as the Epic 009 blocker above: `cd.yml` only exists on a feature branch, so `workflow_dispatch` can't discover it, and `deploy` additionally `needs: build-push-ecr`, which is itself blocked.
+
+**Causa raiz:** Same as the Epic 009 entry above (workflow_dispatch requires the file on `main`; no local Docker to build images as an alternative path).
+
+**Impacto:** No evidence yet that: the live AWS CLI lookups (RDS endpoint by instance identifier, S3 bucket by name prefix) return the expected values in a GitHub Actions runner's environment; `helm upgrade --install` succeeds end-to-end from a clean Actions runner (as opposed to this session's manual run, which already found and fixed one real bug - the `psql`/`PGDATABASE` issue in `cluster-setup`, so the `deploy` job's untested paths carry similar risk); the E2E smoke test's assumptions hold (LoadBalancer hostname becomes available within the 5-minute poll window, the register/login JSON field names match, `ffmpeg` is preinstalled on the `ubuntu-latest` runner image as expected).
+
+**Pré-requisitos para retomada:** Resolution of the Epic 009 blocker (main merge or alternative image path), then a real `gh workflow run cd.yml` dispatch.
+
+**Critério para considerar resolvida:** A `cd.yml` run completes green end-to-end, including the smoke test asserting `PROCESSED` and a successful download URL.
 
 ---
 

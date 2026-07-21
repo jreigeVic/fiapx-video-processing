@@ -63,3 +63,198 @@ jobs:
           docker build -t "$image:${{ github.sha }}" -t "$image:latest" .
           docker push "$image:${{ github.sha }}"
           docker push "$image:latest"
+
+  # Installs the 4 microservice Helm releases (not cluster-setup: the RDS
+  # master password only exists in the operator's local tfstate, so the
+  # namespace/secrets/DB-bootstrap step stays a manual, one-time-per-
+  # environment operation - see infrastructure/helm/README.md). Terraform
+  # state itself is local-only (no remote backend), so this job resolves
+  # the environment via live AWS CLI lookups instead of `terraform
+  # output`, using the same deterministic names Terraform assigns
+  # (infrastructure/terraform/*.tf).
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    needs: build-push-ecr
+    env:
+      AWS_REGION: us-east-1
+      EKS_CLUSTER_NAME: fiapx-eks
+      RDS_INSTANCE_IDENTIFIER: fiapx-postgres
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+
+      # Aborts here rather than mid-Helm-upgrade if the cluster/nodes
+      # aren't healthy (e.g. AWS Academy lab session not started, node
+      # group not Ready yet).
+      - name: Verify cluster health
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+          if kubectl get nodes --no-headers | grep -qv " Ready "; then
+            echo "::error::One or more nodes are not Ready - aborting deploy"
+            exit 1
+          fi
+
+      - name: Resolve environment (RDS endpoint, S3 bucket, ECR registry)
+        id: env
+        run: |
+          rds_host=$(aws rds describe-db-instances \
+            --db-instance-identifier "$RDS_INSTANCE_IDENTIFIER" \
+            --query 'DBInstances[0].Endpoint.Address' --output text)
+          s3_bucket=$(aws s3api list-buckets \
+            --query "Buckets[?starts_with(Name, 'fiapx-videos-')].Name | [0]" --output text)
+          account_id=$(aws sts get-caller-identity --query Account --output text)
+          ecr_registry="${account_id}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
+          echo "rds_host=$rds_host" >> "$GITHUB_OUTPUT"
+          echo "s3_bucket=$s3_bucket" >> "$GITHUB_OUTPUT"
+          echo "ecr_registry=$ecr_registry" >> "$GITHUB_OUTPUT"
+
+      - name: Generate AWS overlay values
+        env:
+          RDS_HOST: ${{ steps.env.outputs.rds_host }}
+          S3_BUCKET: ${{ steps.env.outputs.s3_bucket }}
+          SES_SENDER: ${{ vars.SES_SENDER_EMAIL }}
+        run: |
+          mkdir -p /tmp/helm-generated
+          cat > /tmp/helm-generated/values-identity-service.aws.yaml <<EOF
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://$RDS_HOST:5432/auth_db"
+            - name: AWS_REGION
+              value: "$AWS_REGION"
+          EOF
+          cat > /tmp/helm-generated/values-video-service.aws.yaml <<EOF
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://$RDS_HOST:5432/video_db"
+            - name: AWS_REGION
+              value: "$AWS_REGION"
+            - name: VIDEO_S3_BUCKET
+              value: "$S3_BUCKET"
+          EOF
+          cat > /tmp/helm-generated/values-processing-worker.aws.yaml <<EOF
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://$RDS_HOST:5432/processing_db"
+            - name: AWS_REGION
+              value: "$AWS_REGION"
+            - name: VIDEO_S3_BUCKET
+              value: "$S3_BUCKET"
+          EOF
+          cat > /tmp/helm-generated/values-notification-service.aws.yaml <<EOF
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://$RDS_HOST:5432/notification_db"
+            - name: AWS_REGION
+              value: "$AWS_REGION"
+            - name: NOTIFICATION_SENDER_EMAIL
+              value: "$SES_SENDER"
+          EOF
+
+      - name: Deploy the 4 microservice releases
+        env:
+          ECR_REGISTRY: ${{ steps.env.outputs.ecr_registry }}
+        run: |
+          cd infrastructure/helm/microservice
+          for service in identity-service video-service processing-worker notification-service; do
+            helm upgrade --install "$service" . -n fiapx \
+              -f "values-$service.yaml" \
+              -f "/tmp/helm-generated/values-$service.aws.yaml" \
+              --set image.repository="$ECR_REGISTRY/fiapx/$service" \
+              --set image.tag="${{ github.sha }}" \
+              --wait --timeout 5m
+          done
+
+      - name: Publish deploy evidence to the job summary
+        if: always()
+        run: |
+          {
+            echo "## Deploy evidence"
+            echo '```'
+            kubectl get pods -n fiapx -o wide
+            echo
+            kubectl get svc -n fiapx
+            echo
+            kubectl get hpa -n fiapx
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # End-to-end proof the deployed services actually work together, not
+      # just that the Deployments reached Ready: register a throwaway user,
+      # log in, upload a tiny fixture video, poll until it's no longer
+      # PROCESSING, and download the result. Only identity-service and
+      # video-service have public endpoints (Service type=LoadBalancer,
+      # ADR-005/HLD-10 - no Ingress in this AWS Academy environment).
+      - name: Smoke test (login -> upload -> status -> download)
+        run: |
+          identity_host=$(kubectl get svc identity-service -n fiapx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          video_host=$(kubectl get svc video-service -n fiapx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+
+          for i in $(seq 1 30); do
+            [ -n "$identity_host" ] && [ -n "$video_host" ] && break
+            echo "Waiting for LoadBalancer hostnames..."
+            sleep 10
+            identity_host=$(kubectl get svc identity-service -n fiapx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            video_host=$(kubectl get svc video-service -n fiapx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          done
+
+          identity_url="http://$identity_host"
+          video_url="http://$video_host"
+          email="smoke-$(date +%s)@fiapx.local"
+          password="SmokeTest!2026"
+
+          echo "Registering $email against $identity_url"
+          curl -sf -X POST "$identity_url/api/auth/register" \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$email\",\"password\":\"$password\"}"
+
+          token=$(curl -sf -X POST "$identity_url/api/auth/login" \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$email\",\"password\":\"$password\"}" | \
+            python3 -c "import json,sys; print(json.load(sys.stdin)['accessToken'])")
+
+          echo "Generating a tiny real fixture video"
+          ffmpeg -f lavfi -i testsrc=duration=1:size=64x64:rate=1 -y /tmp/smoke.mp4
+
+          echo "Uploading fixture video to $video_url"
+          video_id=$(curl -sf -X POST "$video_url/api/videos" \
+            -H "Authorization: Bearer $token" \
+            -F "file=@/tmp/smoke.mp4;type=video/mp4" | \
+            python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+
+          echo "Polling status for video $video_id"
+          for i in $(seq 1 30); do
+            status=$(curl -sf "$video_url/api/videos/$video_id" \
+              -H "Authorization: Bearer $token" | \
+              python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
+            echo "status=$status"
+            [ "$status" != "PROCESSING" ] && [ "$status" != "RECEIVED" ] && break
+            sleep 10
+          done
+
+          if [ "$status" != "PROCESSED" ]; then
+            echo "::error::Smoke video ended in status=$status, expected PROCESSED"
+            exit 1
+          fi
+
+          echo "Requesting download URL"
+          curl -sf "$video_url/api/videos/$video_id/download" -H "Authorization: Bearer $token"
