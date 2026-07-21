@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fiapx.processing.application.ports.out.EventPublisherPort;
 import com.fiapx.processing.application.ports.out.StoragePort;
 import com.fiapx.processing.application.usecase.ProcessUploadedVideoUseCase;
@@ -121,9 +122,16 @@ class LocalStackAwsAdapterIntegrationTest {
 
     @Test
     void publishesVideoProcessedToSubscribedQueue() throws Exception {
+        // SnsEventPublisherAdapter's EventEnvelope has an Instant field - the
+        // production ObjectMapper bean gets JavaTimeModule from Spring Boot's
+        // Jackson auto-configuration, so a plain `new ObjectMapper()` here
+        // needs the same module registered explicitly to serialize it.
         EventPublisherPort eventPublisherPort =
                 new SnsEventPublisherAdapter(
-                        snsClient, new ObjectMapper(), "video-processed", "video-failed");
+                        snsClient,
+                        new ObjectMapper().registerModule(new JavaTimeModule()),
+                        "video-processed",
+                        "video-failed");
 
         String topicArn =
                 snsClient

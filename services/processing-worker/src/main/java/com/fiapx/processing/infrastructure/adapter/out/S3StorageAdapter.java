@@ -25,7 +25,11 @@ public class S3StorageAdapter implements StoragePort {
     @Override
     public Path downloadOriginal(StorageObjectKey key) {
         try {
+            // createTempFile reserves a unique name but also creates the (empty)
+            // file - S3Client#getObject(request, Path) refuses to write to a
+            // destination that already exists, so it must be removed first.
             Path target = Files.createTempFile("fiapx-source-", ".mp4");
+            Files.delete(target);
             GetObjectRequest request =
                     GetObjectRequest.builder().bucket(bucket).key(key.value()).build();
             s3Client.getObject(request, target);
