@@ -40,9 +40,36 @@ spec:
             {{- end }}
             {{- end }}
           {{- end }}
-          {{- if .Values.env }}
+          {{- if or .Values.env .Values.observability.enabled }}
           env:
-            {{- toYaml .Values.env | nindent 12 }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.observability.enabled }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ .Values.observability.serviceName | default (include "microservice.name" .) | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.observability.otlpEndpoint | quote }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: {{ .Values.observability.otlpProtocol | quote }}
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: {{ .Values.observability.resourceAttributes | quote }}
+            - name: OTEL_TRACES_EXPORTER
+              value: "otlp"
+            - name: OTEL_METRICS_EXPORTER
+              value: "otlp"
+            - name: OTEL_LOGS_EXPORTER
+              value: "otlp"
+            - name: NEW_RELIC_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.observability.newRelicLicenseSecretName }}
+                  key: NEW_RELIC_LICENSE_KEY
+            # Kubernetes dependent-env-var substitution: $(NEW_RELIC_LICENSE_KEY)
+            # resolves to the value of the env var defined right above.
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: "api-key=$(NEW_RELIC_LICENSE_KEY)"
+            {{- end }}
           {{- end }}
           {{- if .Values.probes.http }}
           livenessProbe:
