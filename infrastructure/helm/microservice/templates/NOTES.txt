@@ -1,0 +1,16 @@
+{{ include "microservice.name" . }} deployed.
+
+{{- if .Values.service.enabled }}
+Service: {{ include "microservice.name" . }} ({{ .Values.service.type }}, port {{ .Values.service.port }})
+{{- if eq .Values.service.type "LoadBalancer" }}
+Check the external hostname with:
+  kubectl get svc {{ include "microservice.name" . }} -n {{ .Release.Namespace }} -w
+{{- end }}
+{{- else }}
+No Service: this is an SQS-polling worker with no HTTP endpoint.
+{{- end }}
+
+{{- if .Values.autoscaling.enabled }}
+HPA active ({{ .Values.autoscaling.minReplicas }}-{{ .Values.autoscaling.maxReplicas }} replicas, {{ .Values.autoscaling.targetCPUUtilizationPercentage }}% CPU target).
+Requires metrics-server to be installed on the cluster - see infrastructure/helm/README.md.
+{{- end }}

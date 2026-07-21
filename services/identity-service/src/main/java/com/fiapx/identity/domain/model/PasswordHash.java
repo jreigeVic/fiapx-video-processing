@@ -23,13 +23,7 @@ public final class PasswordHash {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof PasswordHash that)) {
-            return false;
-        }
-        return value.equals(that.value);
+        return this == other || (other instanceof PasswordHash that && value.equals(that.value));
     }
 
     @Override

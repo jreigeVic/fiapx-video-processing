@@ -78,7 +78,8 @@ Consultar ADR-011 para detalhes completos.
 ```text
 com.fiapx.notification
   application.usecase
-  application.port
+  application.ports.in
+  application.ports.out
   domain.model
   domain.valueobject
   domain.exception

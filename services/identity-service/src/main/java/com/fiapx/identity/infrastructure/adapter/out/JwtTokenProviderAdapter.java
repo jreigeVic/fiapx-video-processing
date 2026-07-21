@@ -29,27 +29,29 @@ public class JwtTokenProviderAdapter implements TokenProviderPort {
     public AccessToken generateAccessToken(User user) {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(accessTokenExpirationSeconds);
-        String token = Jwts.builder()
-                .setSubject(user.getId().toString())
-                .claim("email", user.getEmail().value())
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(expiry))
-                .signWith(signingKey, SignatureAlgorithm.HS256)
-                .compact();
+        String token =
+                Jwts.builder()
+                        .setSubject(user.getId().toString())
+                        .claim("email", user.getEmail().value())
+                        .setIssuedAt(Date.from(now))
+                        .setExpiration(Date.from(expiry))
+                        .signWith(signingKey, SignatureAlgorithm.HS256)
+                        .compact();
         return new AccessToken(token, accessTokenExpirationSeconds);
     }
 
     @Override
     public UUID validateAndGetUserId(String accessToken) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(signingKey)
-                    .build()
-                    .parseClaimsJws(accessToken)
-                    .getBody();
+            Claims claims =
+                    Jwts.parserBuilder()
+                            .setSigningKey(signingKey)
+                            .build()
+                            .parseClaimsJws(accessToken)
+                            .getBody();
             return UUID.fromString(claims.getSubject());
         } catch (JwtException | IllegalArgumentException e) {
-            throw new InvalidAccessTokenException();
+            throw new InvalidAccessTokenException(e);
         }
     }
 }

@@ -20,13 +20,16 @@ class RegisterUserUseCaseTest {
 
     private final UserRepositoryPort userRepositoryPort = mock(UserRepositoryPort.class);
     private final PasswordEncoderPort passwordEncoderPort = mock(PasswordEncoderPort.class);
-    private final RegisterUserUseCase useCase = new RegisterUserUseCase(userRepositoryPort, passwordEncoderPort);
+    private final RegisterUserUseCase useCase =
+            new RegisterUserUseCase(userRepositoryPort, passwordEncoderPort);
 
     @Test
     void registersNewUserWithEncodedPassword() {
         when(userRepositoryPort.existsByEmail(Email.of("new@user.com"))).thenReturn(false);
-        when(passwordEncoderPort.encode("raw-password")).thenReturn(PasswordHash.fromHash("hashed"));
-        when(userRepositoryPort.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(passwordEncoderPort.encode("raw-password"))
+                .thenReturn(PasswordHash.fromHash("hashed"));
+        when(userRepositoryPort.save(any(User.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         User user = useCase.execute("New User", "new@user.com", "raw-password");
 

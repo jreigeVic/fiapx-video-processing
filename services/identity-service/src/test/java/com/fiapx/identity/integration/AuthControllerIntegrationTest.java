@@ -20,11 +20,9 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class AuthControllerIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Autowired private ObjectMapper objectMapper;
 
     @Test
     void meWithoutTokenIsRejected() throws Exception {
@@ -37,29 +35,51 @@ class AuthControllerIntegrationTest {
     void fullAuthLifecycle() throws Exception {
         String email = "lifecycle@user.com";
 
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new RegisterPayload("Lifecycle User", email, "s3cret-password"))))
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                new RegisterPayload(
+                                                        "Lifecycle User",
+                                                        email,
+                                                        "s3cret-password"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value(email));
 
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new RegisterPayload("Lifecycle User", email, "s3cret-password"))))
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                new RegisterPayload(
+                                                        "Lifecycle User",
+                                                        email,
+                                                        "s3cret-password"))))
                 .andExpect(status().isConflict());
 
-        mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginPayload(email, "wrong-password"))))
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                new LoginPayload(email, "wrong-password"))))
                 .andExpect(status().isUnauthorized());
 
-        String loginJson = mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new LoginPayload(email, "s3cret-password"))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken", notNullValue()))
-                .andExpect(jsonPath("$.refreshToken", notNullValue()))
-                .andReturn().getResponse().getContentAsString();
+        String loginJson =
+                mockMvc.perform(
+                                post("/api/auth/login")
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(
+                                                objectMapper.writeValueAsString(
+                                                        new LoginPayload(
+                                                                email, "s3cret-password"))))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.accessToken", notNullValue()))
+                        .andExpect(jsonPath("$.refreshToken", notNullValue()))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
 
         var tokens = objectMapper.readTree(loginJson);
         String accessToken = tokens.get("accessToken").asText();
@@ -69,40 +89,52 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(email));
 
-        String refreshJson = mockMvc.perform(post("/api/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new RefreshPayload(refreshToken))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.refreshToken", notNullValue()))
-                .andReturn().getResponse().getContentAsString();
+        String refreshJson =
+                mockMvc.perform(
+                                post("/api/auth/refresh")
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(
+                                                objectMapper.writeValueAsString(
+                                                        new RefreshPayload(refreshToken))))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.refreshToken", notNullValue()))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
 
-        mockMvc.perform(post("/api/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new RefreshPayload(refreshToken))))
+        mockMvc.perform(
+                        post("/api/auth/refresh")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                new RefreshPayload(refreshToken))))
                 .andExpect(status().isUnauthorized());
 
         var rotated = objectMapper.readTree(refreshJson);
         String rotatedAccessToken = rotated.get("accessToken").asText();
         String rotatedRefreshToken = rotated.get("refreshToken").asText();
 
-        mockMvc.perform(post("/api/auth/logout")
-                        .header("Authorization", "Bearer " + rotatedAccessToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new RefreshPayload(rotatedRefreshToken))))
+        mockMvc.perform(
+                        post("/api/auth/logout")
+                                .header("Authorization", "Bearer " + rotatedAccessToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                new RefreshPayload(rotatedRefreshToken))))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(post("/api/auth/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new RefreshPayload(rotatedRefreshToken))))
+        mockMvc.perform(
+                        post("/api/auth/refresh")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                new RefreshPayload(rotatedRefreshToken))))
                 .andExpect(status().isUnauthorized());
     }
 
-    private record RegisterPayload(String name, String email, String password) {
-    }
+    private record RegisterPayload(String name, String email, String password) {}
 
-    private record LoginPayload(String email, String password) {
-    }
+    private record LoginPayload(String email, String password) {}
 
-    private record RefreshPayload(String refreshToken) {
-    }
+    private record RefreshPayload(String refreshToken) {}
 }

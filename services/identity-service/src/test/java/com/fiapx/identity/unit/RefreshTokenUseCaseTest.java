@@ -29,9 +29,14 @@ class RefreshTokenUseCaseTest {
 
     private final UserRepositoryPort userRepositoryPort = mock(UserRepositoryPort.class);
     private final TokenProviderPort tokenProviderPort = mock(TokenProviderPort.class);
-    private final RefreshTokenRepositoryPort refreshTokenRepositoryPort = mock(RefreshTokenRepositoryPort.class);
-    private final RefreshTokenUseCase useCase = new RefreshTokenUseCase(
-            userRepositoryPort, tokenProviderPort, refreshTokenRepositoryPort, Duration.ofDays(7));
+    private final RefreshTokenRepositoryPort refreshTokenRepositoryPort =
+            mock(RefreshTokenRepositoryPort.class);
+    private final RefreshTokenUseCase useCase =
+            new RefreshTokenUseCase(
+                    userRepositoryPort,
+                    tokenProviderPort,
+                    refreshTokenRepositoryPort,
+                    Duration.ofDays(7));
 
     @Test
     void rotatesValidRefreshToken() {
@@ -39,9 +44,11 @@ class RefreshTokenUseCaseTest {
         IssuedRefreshToken issued = RefreshToken.issue(userId, Duration.ofMinutes(5));
         when(refreshTokenRepositoryPort.findByTokenHash(RefreshToken.hash(issued.rawValue())))
                 .thenReturn(Optional.of(issued.token()));
-        User user = User.register("Jane", Email.of("jane@user.com"), PasswordHash.fromHash("hashed"));
+        User user =
+                User.register("Jane", Email.of("jane@user.com"), PasswordHash.fromHash("hashed"));
         when(userRepositoryPort.findById(userId)).thenReturn(Optional.of(user));
-        when(tokenProviderPort.generateAccessToken(user)).thenReturn(new AccessToken("new-jwt", 900));
+        when(tokenProviderPort.generateAccessToken(user))
+                .thenReturn(new AccessToken("new-jwt", 900));
 
         AuthResult result = useCase.execute(issued.rawValue());
 

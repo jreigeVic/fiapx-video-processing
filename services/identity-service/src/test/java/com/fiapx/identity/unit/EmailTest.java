@@ -22,8 +22,7 @@ class EmailTest {
 
     @Test
     void rejectsBlank() {
-        assertThatThrownBy(() -> Email.of(" "))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Email.of(" ")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

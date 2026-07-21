@@ -18,15 +18,15 @@ No cloud infrastructure, CI/CD pipelines or application code are created by this
 
 ---
 
-## GitHub Container Registry (GHCR)
+## Amazon ECR
 
-**Purpose:** Container image registry for the microservices defined under `services/`.
+**Purpose:** Container image registry for the microservices defined under `services/`. GHCR was the option originally considered (HLD-14); Amazon ECR is what `infrastructure/terraform/ecr.tf` (Epic 008) actually provisions, one repository per service (`fiapx/<service-name>`).
 
 **Usage:**
 
-- Each service image is built from its `Dockerfile` and published as `ghcr.io/<owner>/<service-name>`.
-- Authentication uses a GitHub Personal Access Token (or `GITHUB_TOKEN` in Actions) with `write:packages` scope.
-- Image publishing itself is executed by CI/CD, which is out of scope for this task.
+- Each service image is built from its `Dockerfile` and pushed to `<account-id>.dkr.ecr.us-east-1.amazonaws.com/fiapx/<service-name>`.
+- Authentication uses the AWS Academy session credentials configured as repository secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`) - see `.github/workflows/cd.yml`'s `build-push-ecr` job.
+- Image publishing itself is executed by CD (Epic 010), which is out of scope for this task.
 
 ---
 

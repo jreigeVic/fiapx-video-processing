@@ -46,6 +46,6 @@ A decisao atende aos atributos de qualidade de escalabilidade, disponibilidade, 
 ## Referencias
 
 - docs/HLD/01-solution-overview.md
-- docs/HLD/05 - Quality Attributes.md
-- docs/HLD/10 - Deployment Architecture.md
-- docs/HLD/15 - Architecture Decision Summary.md
+- docs/HLD/05-quality-attributes.md
+- docs/HLD/10-deployment-architecture.md
+- docs/HLD/15-decision-summary.md

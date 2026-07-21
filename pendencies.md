@@ -33,29 +33,116 @@ Remaining minor item, not addressed here: several docs (`docs/shared/package-con
 
 ---
 
-## Service Dependencies
+## Service Dependencies — Resolved 2026-07-18
 
-### Notification Service
+All three gaps below were closed as part of their respective implementation epics (Epic 004 Video Service, Epic 005 Processing Worker, Epic 006 Notification Service): `spring-boot-starter-security` + `jjwt` were added to video-service; `spring-boot-starter-data-jpa` + `org.postgresql:postgresql` + `flyway-database-postgresql` were added to processing-worker and notification-service. Kept for history:
 
-`docs/LLD/notification-service.md` mandates a `JpaNotificationRepositoryAdapter` and a `notification_db` (with a full ER model for `notifications` and `processed_events`), but `services/notification-service/build.gradle.kts` has `flyway-core` with no `spring-boot-starter-data-jpa` and no `org.postgresql:postgresql` driver. The build cannot currently support the persistence layer its own LLD requires.
+### Notification Service (resolved)
 
-### Video Service
+`docs/LLD/notification-service.md` mandates a `JpaNotificationRepositoryAdapter` and a `notification_db` (with a full ER model for `notifications` and `processed_events`), but `services/notification-service/build.gradle.kts` had `flyway-core` with no `spring-boot-starter-data-jpa` and no `org.postgresql:postgresql` driver. The build could not support the persistence layer its own LLD required.
 
-`docs/LLD/video-service.md` explicitly requires token validation (401 on missing/invalid token) and lists "Spring Security" as a dependency, but `services/video-service/build.gradle.kts` has neither `spring-boot-starter-security` nor a JWT library (`identity-service` has both `spring-boot-starter-security` and `jjwt`; `video-service` has neither).
+### Video Service (resolved)
+
+`docs/LLD/video-service.md` explicitly requires token validation (401 on missing/invalid token) and lists "Spring Security" as a dependency, but `services/video-service/build.gradle.kts` had neither `spring-boot-starter-security` nor a JWT library (`identity-service` has both `spring-boot-starter-security` and `jjwt`; `video-service` had neither).
 
 (The `ApplicationUnitTest` Flyway/PostgreSQL-16 failure previously tracked here was resolved by commit `d4bea9e` — the test now runs against H2 with Flyway disabled via `application-test.yml`. Reconfirmed passing during epic-roadmap prep on 2026-07-17.)
 
-### Processing Worker
+### Processing Worker (resolved)
 
-`services/processing-worker/build.gradle.kts` has `flyway-core` with no JPA/Postgres driver. Lower risk than the Notification Service gap, since `docs/LLD/processing-worker.md` treats local persistence as optional ("caso utilize persistencia local para idempotencia").
+`services/processing-worker/build.gradle.kts` had `flyway-core` with no JPA/Postgres driver. Lower risk than the Notification Service gap, since `docs/LLD/processing-worker.md` treats local persistence as optional ("caso utilize persistencia local para idempotencia") — implemented anyway per the idempotency requirement in the same LLD's error-handling table.
 
-**Resolution needed**: add the missing dependencies to each service's `build.gradle.kts` when that service's implementation task starts.
+---
+
+## `flyway:` key placed at document root instead of under `spring:` — all four services (found 2026-07-18)
+
+Same issue already noted below for identity-service now exists identically in video-service, processing-worker, and notification-service's `application.yml` (each copied the same top-level `flyway:` block when scaffolded during their respective epics). Still a no-op in all four, still harmless only because the values match Spring Boot's defaults. Not fixed as part of Epics 004/005/006 per Scope Protection — a single across-the-board fix (moving `flyway:` under `spring:` in all four files) would be a good small follow-up task.
 
 ---
 
 ## Identity Service — Minor Config Placement (found during epic/003-identity, 2026-07-17)
 
 `services/identity-service/src/main/resources/application.yml` declares `flyway:` at the document root instead of nested under `spring:`. Spring Boot's `FlywayProperties` binds to `spring.flyway.*`, so this key is currently a no-op — harmless only because the values (`enabled: true`, `locations: classpath:db/migration`) match Spring Boot's own defaults. Not fixed as part of epic/003-identity since it doesn't block the task; worth a one-line fix whenever that file is next touched for an unrelated reason.
+
+---
+
+## Operational Blockers — Final Roadmap Execution (Epics 008-017)
+
+Per standing execution rule (approved 2026-07-19): operational blockers never stop roadmap execution. Each is documented here, its task is marked Blocked/Pending Validation (never completed), and work continues to the next roadmap item that doesn't depend on it. All entries below are reviewed together at Epic 017 (Final Release) consolidation.
+
+### [Epic 009 - Kubernetes] Cannot push the 4 service images to ECR from this session
+
+**Epic/Task afetadas:** Epic 009 (Kubernetes) - task #20, specifically installing the 4 `microservice` Helm releases (identity-service, video-service, processing-worker, notification-service). Blocks the same step in Epic 010 (CD Pipeline) if not resolved first.
+
+**Descrição do bloqueio:** The 4 Helm releases need their image already pushed to ECR (`infrastructure/terraform/ecr.tf`). Neither available path can produce that image right now:
+- `cd.yml`'s `build-push-ecr` job can only be triggered via `gh workflow run` / the Actions API once the workflow file exists on the repository's default branch (`main`) - GitHub does not expose `workflow_dispatch` for a workflow that only exists on a feature branch. `cd.yml` currently exists only on `epic/009-kubernetes` (stacked on `epic/015-security-hardening` / `epic/008-infrastructure-terraform`), none of which are merged to `main` yet.
+- No local Docker daemon is available in this session (`docker info` fails) to build and `docker push` the images directly.
+
+**Causa raiz:** GitHub Actions `workflow_dispatch` discovery is scoped to the default branch; this repo's epic branches are not merged to `main` until Epic 017 per the original roadmap sequencing. Combined with no local Docker, there is currently no path to produce the 4 images without either (a) an early merge to `main`, or (b) Docker becoming available locally/remotely.
+
+**Impacto:** The 4 `microservice` Helm releases cannot be installed yet. What *is* already deployed and verified on the real `fiapx-eks` cluster: `cluster-setup` release (namespace, DB/JWT/New-Relic secrets, DB bootstrap Job - all 4 logical databases created on the shared RDS instance), and `metrics-server`. Epic 009's kubectl evidence (`get pods`, `get svc`, `get hpa`, `top pods` for the 4 services) cannot be captured until the images exist.
+
+**Pré-requisitos para retomada:** One of:
+1. User approves merging `epic/008-infrastructure-terraform` → `epic/015-security-hardening` → `epic/009-kubernetes` into `main` (would make `cd.yml` dispatchable), or
+2. Local Docker becomes available in-session (user starts Docker Desktop), or
+3. User builds/pushes the 4 images through some other path of their choosing.
+
+**Critério para considerar resolvida:** All 4 ECR repositories (`fiapx/identity-service`, `fiapx/video-service`, `fiapx/processing-worker`, `fiapx/notification-service`) have at least one pushed image tag, and the 4 `microservice` Helm releases install and reach `Ready` on `fiapx-eks`.
+
+### [Epic 010 - CD Pipeline] `deploy` job and E2E smoke test not verified against a real dispatch
+
+**Epic/Task afetadas:** Epic 010 (CD Pipeline) - task #22, the `deploy` job and its smoke test in `.github/workflows/cd.yml`.
+
+**Descrição do bloqueio:** The `deploy` job (cluster health check, live AWS CLI env resolution, `helm upgrade --install` of the 4 releases, E2E smoke test) is written and passes static validation (`actionlint`, no findings), but has never actually run in GitHub Actions. Same root cause as the Epic 009 blocker above: `cd.yml` only exists on a feature branch, so `workflow_dispatch` can't discover it, and `deploy` additionally `needs: build-push-ecr`, which is itself blocked.
+
+**Causa raiz:** Same as the Epic 009 entry above (workflow_dispatch requires the file on `main`; no local Docker to build images as an alternative path).
+
+**Impacto:** No evidence yet that: the live AWS CLI lookups (RDS endpoint by instance identifier, S3 bucket by name prefix) return the expected values in a GitHub Actions runner's environment; `helm upgrade --install` succeeds end-to-end from a clean Actions runner (as opposed to this session's manual run, which already found and fixed one real bug - the `psql`/`PGDATABASE` issue in `cluster-setup`, so the `deploy` job's untested paths carry similar risk); the E2E smoke test's assumptions hold (LoadBalancer hostname becomes available within the 5-minute poll window, the register/login JSON field names match, `ffmpeg` is preinstalled on the `ubuntu-latest` runner image as expected).
+
+**Pré-requisitos para retomada:** Resolution of the Epic 009 blocker (main merge or alternative image path), then a real `gh workflow run cd.yml` dispatch.
+
+**Critério para considerar resolvida:** A `cd.yml` run completes green end-to-end, including the smoke test asserting `PROCESSED` and a successful download URL.
+
+### [Epic 016 - Observability] New Relic account/License Key needed
+
+**Epic/Task afetadas:** Epic 016 (Observability) - task #23, `fiapx-newrelic-license` Secret value.
+
+**Descrição do bloqueio:** All the code/infra wiring for OTLP export to New Relic is implemented and verified (OTel Java agent in all 4 images, verified inert in `docker-compose-smoke`; Helm's `observability` block, verified rendering correctly; `fiapx-newrelic-license` Secret scaffolded in `cluster-setup`, currently blank). The actual license key requires a New Relic account, which is an external, manual step for the user (cannot be created on their behalf).
+
+**Causa raiz:** External dependency - not something resolvable from within this session.
+
+**Impacto:** Until the Secret is populated, `OTEL_EXPORTER_OTLP_HEADERS` resolves to `api-key=` (empty), so New Relic will reject the OTLP payloads (traces/metrics/logs are attempted but not accepted) - no functional gap in the application itself, but no dashboard/service-map evidence until this is set.
+
+**Pré-requisitos para retomada:** User creates a free New Relic account and obtains a License Key.
+
+**Critério para considerar resolvida:** `kubectl create secret` (or a `cluster-setup` re-install with the real key in its values) updates `fiapx-newrelic-license`, and the New Relic UI shows incoming data from at least one of the 4 services.
+
+### [Epic 014 - Documentation & Test Alignment] LocalStack S3/SNS/SQS integration tests not written
+
+**Epic/Task afetadas:** Epic 014 - task 9 (partial). `docs/LLD/video-service.md`, `docs/LLD/processing-worker.md` and `docs/LLD/notification-service.md` also promise LocalStack-based integration tests for S3/SNS/SQS adapters, in addition to the Testcontainers persistence tests (written and committed).
+
+**Descrição do bloqueio:** Not a blocker in the operational sense (no external dependency) - just not attempted this pass, given the size of what was already covered (3 new Testcontainers tests + the doc-sync items) in a single session.
+
+**Causa raiz:** Scope/time, not an external impediment.
+
+**Impacto:** The S3/SNS/SQS adapters (`S3StorageAdapter`, `SnsEventPublisherAdapter`, SQS consumers) remain covered only by unit tests with mocked ports, not integration tests against a real (LocalStack-emulated) AWS API. Lower risk than the persistence gap, since the SDK calls themselves are thin and mostly exercised already via `docker-compose-smoke`'s full-stack boot.
+
+**Pré-requisitos para retomada:** None external - just pick this up as a follow-up task.
+
+**Critério para considerar resolvida:** Each of the 3 services has at least one LocalStack-backed integration test for its AWS adapter(s).
+
+### [Epic 013 - Demo Frontend] Not exercised against a live backend
+
+**Epic/Task afetadas:** Epic 013 (Demo Frontend) - `frontend/index.html`.
+
+**Descrição do bloqueio:** The page was verified statically (JS syntax via `node --check`, served correctly by a local HTTP server) but never actually driven through the real login -> upload -> status -> download flow against a running identity-service/video-service, since this session has no Docker/cluster access.
+
+**Causa raiz:** Same underlying constraint as the Epic 009/010 blockers - no local Docker, no merged `main` yet for a full stack to exist.
+
+**Impacto:** Field-name/behavior assumptions (e.g. `DownloadUrlResponse.url`, `VideoResponse.downloadAvailable`, CORS headers actually reaching the browser) are verified by reading the real DTOs, but not by an actual browser session.
+
+**Pré-requisitos para retomada:** A running stack (`docker compose up` locally, or the deployed cluster once Epic 009/010 clear) plus `IDENTITY_CORS_ALLOWED_ORIGINS`/`VIDEO_CORS_ALLOWED_ORIGINS` set to the frontend's origin.
+
+**Critério para considerar resolvida:** A manual run through the 4-step flow in a real browser against a real backend completes without console errors.
 
 ---
 

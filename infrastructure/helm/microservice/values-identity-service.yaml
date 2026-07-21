@@ -1,0 +1,37 @@
+# helm upgrade --install identity-service ./microservice -n fiapx \
+#   -f values-identity-service.yaml -f ../generated/values-identity-service.aws.yaml
+#
+# The second -f is produced by ../render-aws-values.sh from `terraform output`
+# (RDS endpoint, region) - see infrastructure/helm/README.md. It is never
+# committed: only this file's static defaults are.
+
+nameOverride: identity-service
+
+image:
+  repository: "REPLACE_WITH_ECR_REPOSITORY_URL" # terraform output ecr_repository_urls.identity-service
+  tag: "latest"
+
+containerPort: 8081
+
+service:
+  enabled: true
+  type: LoadBalancer
+  port: 80
+
+probes:
+  http: true
+  path: /actuator/health
+
+autoscaling:
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+envFrom:
+  - secretRef: fiapx-db-credentials
+  - secretRef: fiapx-jwt-secret
+
+# PORT and AWS_REGION are not set here: application.yml already defaults
+# them to 8081 / us-east-1. `env` is populated entirely by the generated
+# AWS overlay above (SPRING_DATASOURCE_URL) - Helm replaces list values
+# wholesale across -f files, so it must not be split across two files.

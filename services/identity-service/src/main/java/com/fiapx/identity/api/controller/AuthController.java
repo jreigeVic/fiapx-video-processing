@@ -34,11 +34,12 @@ public class AuthController {
     private final LogoutUseCase logoutUseCase;
     private final GetAuthenticatedUserUseCase getAuthenticatedUserUseCase;
 
-    public AuthController(RegisterUserUseCase registerUserUseCase,
-                           AuthenticateUserUseCase authenticateUserUseCase,
-                           RefreshTokenUseCase refreshTokenUseCase,
-                           LogoutUseCase logoutUseCase,
-                           GetAuthenticatedUserUseCase getAuthenticatedUserUseCase) {
+    public AuthController(
+            RegisterUserUseCase registerUserUseCase,
+            AuthenticateUserUseCase authenticateUserUseCase,
+            RefreshTokenUseCase refreshTokenUseCase,
+            LogoutUseCase logoutUseCase,
+            GetAuthenticatedUserUseCase getAuthenticatedUserUseCase) {
         this.registerUserUseCase = registerUserUseCase;
         this.authenticateUserUseCase = authenticateUserUseCase;
         this.refreshTokenUseCase = refreshTokenUseCase;
@@ -49,7 +50,8 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse register(@Valid @RequestBody RegisterUserRequest request) {
-        User user = registerUserUseCase.execute(request.name(), request.email(), request.password());
+        User user =
+                registerUserUseCase.execute(request.name(), request.email(), request.password());
         return AuthMapper.toUserResponse(user);
     }
 
@@ -73,7 +75,8 @@ public class AuthController {
 
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(Authentication authentication, @Valid @RequestBody RefreshTokenRequest request) {
+    public void logout(
+            Authentication authentication, @Valid @RequestBody RefreshTokenRequest request) {
         logoutUseCase.execute(currentUserId(authentication), request.refreshToken());
     }
 

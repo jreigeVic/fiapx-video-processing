@@ -1,0 +1,6 @@
+cluster-setup applied to namespace {{ .Values.namespace }}.
+
+Wait for the database bootstrap Job to finish before installing any service release:
+  kubectl wait --for=condition=complete --timeout=120s job/fiapx-db-bootstrap -n {{ .Values.namespace }}
+
+Then install the 4 service releases - see infrastructure/helm/README.md.
