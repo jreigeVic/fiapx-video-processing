@@ -8,14 +8,19 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Shells out to the system ffmpeg binary (installed in the service's Dockerfile). */
 public class FfmpegVideoProcessorAdapter implements VideoProcessorPort {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(FfmpegVideoProcessorAdapter.class);
     private static final long TIMEOUT_MINUTES = 10;
     private static final String PROCESSING_ERROR = "PROCESSING_ERROR";
 
@@ -30,13 +35,37 @@ public class FfmpegVideoProcessorAdapter implements VideoProcessorPort {
     @Override
     public ProcessingOutput extractFrames(Path videoFile) {
         Path framesDir = createFramesDirectory();
-        runFfmpeg(videoFile, framesDir);
-        List<Path> frames = listFrames(framesDir);
-        if (frames.isEmpty()) {
-            throw new ProcessingFailedException("NO_FRAMES_EXTRACTED");
+        try {
+            runFfmpeg(videoFile, framesDir);
+            List<Path> frames = listFrames(framesDir);
+            if (frames.isEmpty()) {
+                throw new ProcessingFailedException("NO_FRAMES_EXTRACTED");
+            }
+            Path zipFile = zipFrames(framesDir, frames);
+            return new ProcessingOutput(zipFile, frames.size());
+        } finally {
+            // The zip file returned above is a sibling of framesDir, not a child of it,
+            // so it survives this cleanup - only the raw per-frame JPEGs (no longer
+            // needed once zipped) are removed here.
+            deleteFramesDirectory(framesDir);
         }
-        Path zipFile = zipFrames(framesDir, frames);
-        return new ProcessingOutput(zipFile, frames.size());
+    }
+
+    private void deleteFramesDirectory(Path framesDir) {
+        try (Stream<Path> walk = Files.walk(framesDir)) {
+            walk.sorted(Comparator.reverseOrder())
+                    .forEach(FfmpegVideoProcessorAdapter::deleteQuietly);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to clean up frames directory {}", framesDir, e);
+        }
+    }
+
+    private static void deleteQuietly(Path path) {
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to delete temporary file {}", path, e);
+        }
     }
 
     private Path createFramesDirectory() {
@@ -83,7 +112,7 @@ public class FfmpegVideoProcessorAdapter implements VideoProcessorPort {
         } catch (IOException e) {
             throw new ProcessingFailedException(PROCESSING_ERROR, e);
         }
-        frames.sort(java.util.Comparator.comparing(Path::toString));
+        frames.sort(Comparator.comparing(Path::toString));
         return frames;
     }
 

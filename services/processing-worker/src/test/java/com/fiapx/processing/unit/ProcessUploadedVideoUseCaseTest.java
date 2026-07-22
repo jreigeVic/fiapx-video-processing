@@ -1,5 +1,6 @@
 package com.fiapx.processing.unit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -15,6 +16,8 @@ import com.fiapx.processing.application.ports.out.VideoProcessorPort;
 import com.fiapx.processing.application.usecase.ProcessUploadedVideoUseCase;
 import com.fiapx.processing.domain.exception.ProcessingFailedException;
 import com.fiapx.processing.domain.model.StorageObjectKey;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -54,6 +57,46 @@ class ProcessUploadedVideoUseCaseTest {
                         eq(videoId), eq(ownerId), eq("owner@user.com"), any(), any());
         verify(eventPublisherPort, never()).publishVideoFailed(any(), any(), any(), any());
         verify(idempotencyPort).save(any());
+    }
+
+    @Test
+    void deletesTemporaryFilesAfterSuccessfulProcessing() throws IOException {
+        Path localFile = Files.createTempFile("fiapx-test-source-", ".mp4");
+        Path zipFile = Files.createTempFile("fiapx-test-result-", ".zip");
+        UUID eventId = UUID.randomUUID();
+        when(idempotencyPort.existsByEventId(eventId)).thenReturn(false);
+        when(storagePort.downloadOriginal(any())).thenReturn(localFile);
+        when(videoProcessorPort.extractFrames(localFile))
+                .thenReturn(new ProcessingOutput(zipFile, 7));
+
+        useCase.execute(
+                eventId,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "owner@user.com",
+                StorageObjectKey.of("videos/original/x.mp4"));
+
+        assertThat(localFile).doesNotExist();
+        assertThat(zipFile).doesNotExist();
+    }
+
+    @Test
+    void deletesDownloadedOriginalEvenWhenProcessingFails() throws IOException {
+        Path localFile = Files.createTempFile("fiapx-test-source-", ".mp4");
+        UUID eventId = UUID.randomUUID();
+        when(idempotencyPort.existsByEventId(eventId)).thenReturn(false);
+        when(storagePort.downloadOriginal(any())).thenReturn(localFile);
+        when(videoProcessorPort.extractFrames(localFile))
+                .thenThrow(new ProcessingFailedException("PROCESSING_ERROR"));
+
+        useCase.execute(
+                eventId,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "owner@user.com",
+                StorageObjectKey.of("videos/original/x.mp4"));
+
+        assertThat(localFile).doesNotExist();
     }
 
     @Test

@@ -11,6 +11,8 @@ import com.fiapx.processing.domain.model.FrameCount;
 import com.fiapx.processing.domain.model.ProcessedEvent;
 import com.fiapx.processing.domain.model.ProcessingJob;
 import com.fiapx.processing.domain.model.StorageObjectKey;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -48,12 +50,15 @@ public class ProcessUploadedVideoUseCase {
 
         ProcessingJob job = ProcessingJob.start(videoId, ownerUserId, sourceObjectKey);
 
+        Path originalFile = null;
+        Path zipFile = null;
         try {
-            Path originalFile = storagePort.downloadOriginal(sourceObjectKey);
+            originalFile = storagePort.downloadOriginal(sourceObjectKey);
             ProcessingOutput output = videoProcessorPort.extractFrames(originalFile);
+            zipFile = output.zipFile();
 
             StorageObjectKey resultKey = StorageObjectKey.of("videos/results/" + videoId + ".zip");
-            storagePort.uploadResult(resultKey, output.zipFile());
+            storagePort.uploadResult(resultKey, zipFile);
             job.succeed(resultKey);
 
             eventPublisherPort.publishVideoProcessed(
@@ -71,8 +76,22 @@ public class ProcessUploadedVideoUseCase {
             job.fail();
             eventPublisherPort.publishVideoFailed(
                     videoId, ownerUserId, ownerEmail, FailureReason.of("PROCESSING_ERROR"));
+        } finally {
+            deleteQuietly(originalFile);
+            deleteQuietly(zipFile);
         }
 
         idempotencyPort.save(ProcessedEvent.record(eventId, "VideoUploaded"));
+    }
+
+    private void deleteQuietly(Path path) {
+        if (path == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to delete temporary file {}", path, e);
+        }
     }
 }

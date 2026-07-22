@@ -3,7 +3,9 @@ package com.fiapx.video.unit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -61,6 +63,26 @@ class UploadVideoUseCaseTest {
                 .publishVideoUploaded(
                         any(Video.class), org.mockito.ArgumentMatchers.eq("owner@user.com"));
         verify(videoRepositoryPort, times(2)).save(any(Video.class));
+    }
+
+    @Test
+    void doesNotPersistVideoWhenStorageUploadFails() {
+        UploadedFile file =
+                new UploadedFile(
+                        "movie.mp4",
+                        "video/mp4",
+                        10,
+                        new ByteArrayInputStream(new byte[] {1, 2, 3}));
+        doThrow(new RuntimeException("S3 unavailable"))
+                .when(storagePort)
+                .store(any(), any(), org.mockito.ArgumentMatchers.eq(10L), any());
+
+        assertThatThrownBy(() -> useCase.execute(UUID.randomUUID(), "owner@user.com", file))
+                .isInstanceOf(RuntimeException.class);
+
+        verify(videoRepositoryPort, never()).save(any(Video.class));
+        verify(eventPublisherPort, never())
+                .publishVideoUploaded(any(Video.class), org.mockito.ArgumentMatchers.any());
     }
 
     @Test

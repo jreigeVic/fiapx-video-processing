@@ -37,10 +37,10 @@ public class UploadVideoUseCase {
         StorageObjectKey sourceKey =
                 StorageObjectKey.of(
                         "videos/original/" + UUID.randomUUID() + "-" + file.originalFileName());
+        storagePort.store(sourceKey, file.content(), file.size(), file.contentType());
+
         Video video = Video.receive(ownerUserId, file.originalFileName(), sourceKey);
         videoRepositoryPort.save(video);
-
-        storagePort.store(sourceKey, file.content(), file.size(), file.contentType());
 
         eventPublisherPort.publishVideoUploaded(video, ownerEmail);
         video.markProcessing();
