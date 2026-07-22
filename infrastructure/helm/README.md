@@ -63,6 +63,14 @@ HLD-14 (CI/CD) - `helm upgrade identity-service` never touches the other
    3 repository secrets refreshed from the active AWS Academy lab session
    (credentials rotate every ~4h): `AWS_ACCESS_KEY_ID`,
    `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`.
+5. Optionally, `NEW_RELIC_LICENSE_KEY` as a repository secret (doesn't
+   rotate like the 3 above). When present, the `deploy` job's "Sync New
+   Relic license key" step applies it directly to the
+   `fiapx-newrelic-license` Kubernetes Secret on every dispatch, ahead of
+   the microservice rollout - keeping observability (ADR-015) live without
+   a manual `helm upgrade cluster-setup` step. When absent, that step is
+   skipped and pods keep whatever value the Secret already has (see step
+   comment in `cd.yml` for the Helm/kubectl ownership caveat).
 
 ## Deploy order
 

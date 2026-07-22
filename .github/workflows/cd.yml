@@ -170,6 +170,35 @@ jobs:
               value: "$SES_SENDER"
           EOF
 
+      # Keeps the New Relic license key current on every deploy, applied
+      # directly via kubectl - independent of the cluster-setup Helm
+      # release, which stays excluded from CD (its other values, like the
+      # RDS master password, only exist in the operator's local tfstate).
+      # Placed before the microservice rollout below so pods recreated by
+      # that rollout start with the current key already in place; skipped
+      # entirely if the secret isn't set, so it never overwrites a working
+      # key with an empty one.
+      #
+      # Caveat: this Secret is templated by cluster-setup
+      # (infrastructure/helm/cluster-setup/templates/secret-newrelic.yaml).
+      # A future `helm upgrade cluster-setup --reuse-values` will reset it
+      # to whatever `newRelic.licenseKey` was last set to on that Helm
+      # release (empty by default) - re-apply this key with `--set
+      # newRelic.licenseKey=<key>` if that ever happens, or just re-run this
+      # workflow afterward.
+      - name: Sync New Relic license key
+        env:
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+        run: |
+          if [ -z "$NEW_RELIC_LICENSE_KEY" ]; then
+            echo "NEW_RELIC_LICENSE_KEY not configured, skipping New Relic secret sync."
+            exit 0
+          fi
+          kubectl create secret generic fiapx-newrelic-license \
+            --namespace fiapx \
+            --from-literal=NEW_RELIC_LICENSE_KEY="$NEW_RELIC_LICENSE_KEY" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Deploy the 4 microservice releases
         env:
           ECR_REGISTRY: ${{ steps.env.outputs.ecr_registry }}
