@@ -101,6 +101,21 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 **Pendente:** confirmar visualmente no New Relic UI (Explorer -> Services - OpenTelemetry) que os 4 serviços aparecem com dados - não verificado neste ambiente de execução (sem acesso de browser); pedir para o usuário confirmar.
 
+### [Epic 011 - Load Testing] k6 scenarios A/B/C - RESOLVED 2026-07-23
+
+**Resolvido.** Todos os 3 cenários rodados contra o cluster real:
+- **Scenario A (burst, 50 VUs)**: 0% de falhas, 100% dos checks (RNF-03 - fila absorve o burst sem perder requisição). Threshold de latência (`p95<5s`) não foi atingido (`p95=15s`) - esperado, só 1 réplica ativa no instante do burst, antes do HPA reagir.
+- **Scenario B (sustained, 10 VUs/5min)**: todos os 3 thresholds passaram (`checks=100%`, `p95=369ms`, `falhas=0%`) - RF-04/RNF-01 confirmados.
+- **Scenario C (spike, 5->100->5 VUs)**: ambos os thresholds passaram (`checks=99.97%`, `falhas=0.02%`, 1 em 4906). HPA confirmado escalando de verdade via `capture-hpa-evidence.sh` (identity-service e video-service saltaram de 1 para 3 réplicas durante o pico).
+
+**Bugs encontrados e corrigidos nos scripts** (`tests/load/lib/auth.js`, `tests/load/lib/video.js`) - os mesmos 2 mismatches já corrigidos no smoke test do `cd.yml`: `register` não enviava `name`; upload lia `id` em vez de `videoId`.
+
+### [Epic 013 - Demo Frontend] Testado via Playwright contra o cluster real - PARCIALMENTE VALIDADO 2026-07-23
+
+Fluxo de login + upload funcionou de ponta a ponta na UI real (Playwright headless), após configurar `IDENTITY_CORS_ALLOWED_ORIGINS`/`VIDEO_CORS_ALLOWED_ORIGINS` para o origin local usado no teste. O vídeo de teste ficou preso em `PROCESSING` porque a sessão AWS Academy expirou/foi cancelada no meio do teste (confirmado: toda chamada AWS - EKS, RDS, S3, CloudWatch - passou a retornar `AccessDenied` pela policy `voc-cancel-cred`), não por um bug do frontend ou do backend.
+
+**Pendente:** repetir o clique-a-clique (login -> upload -> PROCESSED -> download) numa sessão AWS Academy nova para confirmar o fluxo completo até o fim.
+
 ### [Epic 014 - Documentation & Test Alignment] LocalStack S3/SNS/SQS integration tests - RESOLVED 2026-07-21
 
 **Resolvido.** PR #17 (merged to `main`) added one LocalStack-backed integration test per service, instantiating adapters/consumers directly against a real LocalStack container: video-service (`S3StorageAdapter`, `SnsEventPublisherAdapter`, `ProcessingResultConsumer`), processing-worker (`S3StorageAdapter`, `SnsEventPublisherAdapter`, `VideoUploadedConsumer`), notification-service (`ProcessingNotificationConsumer` only - no S3/SNS use in that service). Verified green in CI with a real Docker daemon (all 4 `build-test-analyze` jobs + `docker-compose-smoke` passed).
@@ -109,17 +124,7 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 **Critério de resolução:** atendido - each of the 3 services has at least one LocalStack-backed integration test for its AWS adapter(s), verified passing in CI.
 
-### [Epic 013 - Demo Frontend] Not exercised against a live backend
-
-**Epic/Task afetadas:** Epic 013 (Demo Frontend) - `frontend/index.html`.
-
-**Descrição do bloqueio:** The page was verified statically (JS syntax via `node --check`, served correctly by a local HTTP server) but never actually driven through the real login -> upload -> status -> download flow against a running identity-service/video-service, since this session has no Docker/cluster access.
-
-**Causa raiz:** Same underlying constraint as the Epic 009/010 blockers - no local Docker and no deployed stack with real endpoints to point the page at yet (the `main` merge itself is done as of 2026-07-21; what's missing now is a fresh AWS Academy session to actually deploy).
-
-**Impacto:** Field-name/behavior assumptions (e.g. `DownloadUrlResponse.url`, `VideoResponse.downloadAvailable`, CORS headers actually reaching the browser) are verified by reading the real DTOs, but not by an actual browser session.
-
-**Pré-requisitos para retomada:** A running stack (`docker compose up` locally, or the deployed cluster once Epic 009/010 clear) plus `IDENTITY_CORS_ALLOWED_ORIGINS`/`VIDEO_CORS_ALLOWED_ORIGINS` set to the frontend's origin.
+(Epic 013 entry moved above - see "Testado via Playwright contra o cluster real" earlier in this section.)
 
 **Critério para considerar resolvida:** A manual run through the 4-step flow in a real browser against a real backend completes without console errors.
 

@@ -12,7 +12,7 @@ export function registerAndLogin(vuId, iteration) {
 
   const registerRes = http.post(
     `${IDENTITY_BASE_URL}/api/auth/register`,
-    JSON.stringify({ email, password }),
+    JSON.stringify({ name: `Load Test VU${vuId}`, email, password }),
     { headers: { 'Content-Type': 'application/json' } },
   );
   check(registerRes, { 'register succeeded': (r) => r.status === 201 });

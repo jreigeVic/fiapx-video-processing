@@ -17,7 +17,7 @@ export function uploadVideo(token) {
     { headers: authHeaders(token) },
   );
   const ok = check(res, { 'upload accepted (202)': (r) => r.status === 202 });
-  return ok ? res.json('id') : null;
+  return ok ? res.json('videoId') : null;
 }
 
 // RF-06: status listing/lookup by id.
