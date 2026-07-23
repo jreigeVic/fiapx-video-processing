@@ -235,6 +235,8 @@ jobs:
       # ADR-005/HLD-10 - no Ingress in this AWS Academy environment).
       - name: Smoke test (login -> upload -> status -> download)
         run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
           identity_host=$(kubectl get svc identity-service -n fiapx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
           video_host=$(kubectl get svc video-service -n fiapx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
 
