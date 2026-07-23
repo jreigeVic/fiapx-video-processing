@@ -69,37 +69,23 @@ Same issue already noted below for identity-service now exists identically in vi
 
 Per standing execution rule (approved 2026-07-19): operational blockers never stop roadmap execution. Each is documented here, its task is marked Blocked/Pending Validation (never completed), and work continues to the next roadmap item that doesn't depend on it. All entries below are reviewed together at Epic 017 (Final Release) consolidation.
 
-### [Epic 009 - Kubernetes] Cannot push the 4 service images to ECR from this session
+### [Epic 009 - Kubernetes] Cannot push the 4 service images to ECR from this session — RESOLVED 2026-07-23
 
-**Status (2026-07-21): root cause resolved by merge, execution still pending.** PR #15 merged the full epic/007-013 stack into `main`, so `cd.yml` is now a registered, dispatchable workflow (confirmed via `gh workflow list`). What remains is simply running it with fresh AWS Academy session credentials.
+**Resolvido.** A fresh AWS Academy session was used to dispatch `cd.yml` end-to-end. All 4 ECR repositories now have pushed image tags (`build-push-ecr` job green for identity-service, video-service, processing-worker, notification-service), and the 4 `microservice` Helm releases installed and reached `Ready` on `fiapx-eks`.
 
-**Epic/Task afetadas:** Epic 009 (Kubernetes) - task #20, specifically installing the 4 `microservice` Helm releases (identity-service, video-service, processing-worker, notification-service). Blocks the same step in Epic 010 (CD Pipeline) if not resolved first.
+**Critério de resolução:** atendido.
 
-**Descrição do bloqueio:** The 4 Helm releases need their image already pushed to ECR (`infrastructure/terraform/ecr.tf`). No local Docker daemon is available in this session (`docker info` fails) to build and push directly, but this is no longer required now that `cd.yml`'s `build-push-ecr` job can be dispatched on `main`.
+### [Epic 010 - CD Pipeline] `deploy` job and E2E smoke test not verified against a real dispatch — RESOLVED 2026-07-23
 
-**Causa raiz (histórica):** GitHub Actions `workflow_dispatch` discovery is scoped to the default branch; resolved by the 2026-07-21 merge to `main`.
+**Resolvido**, after fixing 3 real bugs the first live dispatch surfaced (none of these were ever exercised before this session's first real `cd.yml` run against `fiapx-eks`):
 
-**Impacto:** The 4 `microservice` Helm releases still aren't installed. What *is* already deployed and verified on the real `fiapx-eks` cluster (2026-07-19 session): `cluster-setup` release (namespace, DB/JWT/New-Relic secrets, DB bootstrap Job - all 4 logical databases created on the shared RDS instance), `metrics-server`, and the `amazon-cloudwatch-observability` addon. That AWS Academy session's credentials have very likely expired (~4h window) and the cluster itself may no longer exist if the lab session ended.
+1. **Smoke test payload mismatches** (`cd.yml`): `/api/auth/register` requires a `name` field the script never sent; the upload endpoint returns `videoId`, not `id`. Both fixed in the script itself.
+2. **`ffmpeg` missing on the `ubuntu-latest` runner**: added an `apt-get install ffmpeg` step before the smoke test (not preinstalled as assumed).
+3. **IMDS hop limit blocking all pod-level AWS SDK calls (the real blocker)**: EKS managed node groups default their launch template's `HttpPutResponseHopLimit` to 1, which only lets processes on the node's own network namespace reach the instance metadata service - pods need one extra hop. With no IRSA/OIDC in AWS Academy, IMDS via the node's `LabRole` instance profile is the *only* credential path every service pod has, so every S3/SQS/SNS call from any pod silently failed to get credentials. This surfaced as video uploads failing with a misleading `401 Missing or invalid token` (see the related JWT filter finding below) instead of the real 500. Fixed by adding a dedicated `aws_launch_template` resource (`infrastructure/terraform/eks.tf`) with `http_put_response_hop_limit = 2`, referenced from `aws_eks_node_group.default` - this forces a full node group replacement (~10min), applied and confirmed (`HopLimit: 2` on both new nodes).
 
-**Pré-requisitos para retomada:** A fresh AWS Academy lab session: refresh the 3 GitHub secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`), confirm `terraform apply` state still matches reality (re-apply if the cluster was torn down), then `gh workflow run cd.yml`.
+**Bonus find, fixed alongside (not itself a CD-pipeline bug but was blocking correct diagnosis):** `JwtAuthenticationFilter` in both identity-service and video-service extends `OncePerRequestFilter`, whose default `shouldNotFilterErrorDispatch()` returns `true` - meaning the filter skips itself on Spring Boot's internal forward to `/error` after ANY unhandled exception (400/404/500/whatever). Since the forwarded request then re-enters `anyRequest().authenticated()` with no Authentication ever re-established, the client always sees a generic `401 Missing or invalid token`, no matter what the real error was. This masked the IMDS bug's real 500 and would mask any future error identically. Fixed by overriding `shouldNotFilterErrorDispatch()` to `false` in both filters.
 
-**Critério para considerar resolvida:** All 4 ECR repositories (`fiapx/identity-service`, `fiapx/video-service`, `fiapx/processing-worker`, `fiapx/notification-service`) have at least one pushed image tag, and the 4 `microservice` Helm releases install and reach `Ready` on `fiapx-eks`.
-
-### [Epic 010 - CD Pipeline] `deploy` job and E2E smoke test not verified against a real dispatch
-
-**Status (2026-07-21): root cause resolved by merge, execution still pending.** Same update as the Epic 009 entry above - `cd.yml` is dispatchable on `main` now; only a real run with fresh AWS credentials remains.
-
-**Epic/Task afetadas:** Epic 010 (CD Pipeline) - task #22, the `deploy` job and its smoke test in `.github/workflows/cd.yml`.
-
-**Descrição do bloqueio:** The `deploy` job (cluster health check, live AWS CLI env resolution, `helm upgrade --install` of the 4 releases, E2E smoke test) is written and passes static validation (`actionlint`, no findings), but has never actually run in GitHub Actions.
-
-**Causa raiz (histórica):** Same as the Epic 009 entry (workflow_dispatch requires the file on `main`) - resolved.
-
-**Impacto:** No evidence yet that: the live AWS CLI lookups (RDS endpoint by instance identifier, S3 bucket by name prefix) return the expected values in a GitHub Actions runner's environment; `helm upgrade --install` succeeds end-to-end from a clean Actions runner (as opposed to this session's manual run, which already found and fixed one real bug - the `psql`/`PGDATABASE` issue in `cluster-setup`, so the `deploy` job's untested paths carry similar risk); the E2E smoke test's assumptions hold (LoadBalancer hostname becomes available within the 5-minute poll window, the register/login JSON field names match, `ffmpeg` is preinstalled on the `ubuntu-latest` runner image as expected).
-
-**Pré-requisitos para retomada:** A fresh AWS Academy lab session (same as Epic 009 above), then `gh workflow run cd.yml`.
-
-**Critério para considerar resolvida:** A `cd.yml` run completes green end-to-end, including the smoke test asserting `PROCESSED` and a successful download URL.
+**Critério de resolução:** atendido - `cd.yml` run [30036873068](https://github.com/jreigeVic/fiapx-video-processing/actions/runs/30036873068) completed fully green (all 4 image builds + deploy + smoke test) with the IMDS/launch-template fix and both JWT filter fixes already live on the new node group.
 
 ### [Epic 016 - Observability] New Relic License Key - wiring automated, pending live-cluster validation
 
@@ -111,11 +97,9 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 **Caveat documentado (comentário no próprio step de `cd.yml`):** o Secret `fiapx-newrelic-license` é templated pelo `cluster-setup` (`infrastructure/helm/cluster-setup/templates/secret-newrelic.yaml`). Um futuro `helm upgrade cluster-setup --reuse-values` vai resetar seu valor para o que estiver em `newRelic.licenseKey` naquele release Helm (vazio por padrão), sobrescrevendo o valor aplicado via CD. Se isso acontecer, ou reaplicar a chave com `--set newRelic.licenseKey=<key>`, ou simplesmente rodar `cd.yml` de novo.
 
-**Impacto:** Nenhum mais no design - falta apenas a validação operacional: rodar `cd.yml` contra um cluster real e confirmar no New Relic UI que os dados chegam.
+**Status (2026-07-23): validado.** `cd.yml`'s "Sync New Relic license key" step ran successfully against the real cluster (multiple dispatches this session). Live traffic (register/login/upload/ffmpeg-processing/download, generated while diagnosing the Epic 010 blockers above) went through all 4 services during this window, giving the OTel OTLP export something real to send.
 
-**Pré-requisitos para retomada:** Sessão AWS Academy ativa com cluster no ar (mesma dependência dos itens de Epic 009/010).
-
-**Critério para considerar resolvida:** Uma execução real de `cd.yml` aplica a chave com sucesso e o New Relic UI mostra dados de pelo menos um dos 4 serviços.
+**Pendente:** confirmar visualmente no New Relic UI (Explorer -> Services - OpenTelemetry) que os 4 serviços aparecem com dados - não verificado neste ambiente de execução (sem acesso de browser); pedir para o usuário confirmar.
 
 ### [Epic 014 - Documentation & Test Alignment] LocalStack S3/SNS/SQS integration tests - RESOLVED 2026-07-21
 
