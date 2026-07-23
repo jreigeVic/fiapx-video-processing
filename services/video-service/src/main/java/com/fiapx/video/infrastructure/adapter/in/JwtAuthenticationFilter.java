@@ -24,6 +24,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.tokenValidatorPort = tokenValidatorPort;
     }
 
+    // OncePerRequestFilter skips ERROR-dispatch requests by default, so
+    // without this override, any exception past this filter (e.g. a 500
+    // from a downstream call) triggers Spring Boot's forward to /error
+    // without re-authenticating - reported back to the client as a
+    // misleading 401 "Missing or invalid token" instead of the real error.
+    @Override
+    protected boolean shouldNotFilterErrorDispatch() {
+        return false;
+    }
+
     @Override
     protected void doFilterInternal(
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
