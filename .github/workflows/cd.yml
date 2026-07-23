@@ -254,7 +254,7 @@ jobs:
           echo "Registering $email against $identity_url"
           curl -sf -X POST "$identity_url/api/auth/register" \
             -H 'Content-Type: application/json' \
-            -d "{\"email\":\"$email\",\"password\":\"$password\"}"
+            -d "{\"name\":\"Smoke Test\",\"email\":\"$email\",\"password\":\"$password\"}"
 
           token=$(curl -sf -X POST "$identity_url/api/auth/login" \
             -H 'Content-Type: application/json' \
@@ -268,7 +268,7 @@ jobs:
           video_id=$(curl -sf -X POST "$video_url/api/videos" \
             -H "Authorization: Bearer $token" \
             -F "file=@/tmp/smoke.mp4;type=video/mp4" | \
-            python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+            python3 -c "import json,sys; print(json.load(sys.stdin)['videoId'])")
 
           echo "Polling status for video $video_id"
           for i in $(seq 1 30); do
