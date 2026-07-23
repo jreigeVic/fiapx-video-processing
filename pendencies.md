@@ -87,7 +87,7 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 **Critério de resolução:** atendido - `cd.yml` run [30036873068](https://github.com/jreigeVic/fiapx-video-processing/actions/runs/30036873068) completed fully green (all 4 image builds + deploy + smoke test) with the IMDS/launch-template fix and both JWT filter fixes already live on the new node group.
 
-### [Epic 016 - Observability] New Relic License Key - wiring automated, pending live-cluster validation
+### [Epic 016 - Observability] New Relic License Key + Dashboard-as-Code - RESOLVED 2026-07-23
 
 **Status (2026-07-21): design gap closed, option 2 (automated via CD) approved and implemented.** User created the New Relic account and added the key as the GitHub Actions repository secret `NEW_RELIC_LICENSE_KEY` (confirmed via `gh secret list`, added 2026-07-19). `cd.yml`'s `deploy` job now has a "Sync New Relic license key" step that reads this secret and applies it directly to the `fiapx-newrelic-license` Kubernetes Secret via `kubectl create secret ... --dry-run=client -o yaml | kubectl apply -f -`, placed right before the microservice rollout so recreated pods pick up the current key. The step is skipped (no-op) when the secret isn't set, so it never overwrites a working key with an empty one.
 
@@ -99,7 +99,9 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 **Status (2026-07-23): validado.** `cd.yml`'s "Sync New Relic license key" step ran successfully against the real cluster (multiple dispatches this session). Live traffic (register/login/upload/ffmpeg-processing/download, generated while diagnosing the Epic 010 blockers above) went through all 4 services during this window, giving the OTel OTLP export something real to send.
 
-**Pendente:** confirmar visualmente no New Relic UI (Explorer -> Services - OpenTelemetry) que os 4 serviços aparecem com dados - não verificado neste ambiente de execução (sem acesso de browser); pedir para o usuário confirmar.
+**RESOLVIDO 2026-07-23 (fechamento final):** dashboard implementado como código via Terraform (`infrastructure/terraform/observability.tf`, provider `newrelic` em `versions.tf`/`providers.tf`, variáveis `new_relic_account_id`/`new_relic_api_key` em `variables.tf`), em vez de montado manualmente na UI - conforme a recomendação original do roadmap. Widgets validados com dados reais via NerdGraph (NRQL) antes e depois do `apply`: throughput, p95 de latência e taxa de erro por serviço, mais uma tabela de traces recentes. Achado durante a validação: os root spans de `processing-worker`/`notification-service` são `span.kind = 'consumer'` (SQS), não `server` (HTTP) como em `identity-service`/`video-service` - o filtro NRQL usa `span.kind IN ('server', 'consumer')` para cobrir os 4 serviços. Confirmado por query direta: os 4 serviços aparecem com contagem de spans > 0 na mesma janela de 30 min. CloudWatch Container Insights confirmado `ACTIVE` (`aws eks describe-addon`).
+
+**Critério de resolução:** atendido - dashboard versionado no repositório, com evidência de dados reais dos 4 serviços.
 
 ### [Epic 011 - Load Testing] k6 scenarios A/B/C - RESOLVED 2026-07-23
 
@@ -110,11 +112,13 @@ Per standing execution rule (approved 2026-07-19): operational blockers never st
 
 **Bugs encontrados e corrigidos nos scripts** (`tests/load/lib/auth.js`, `tests/load/lib/video.js`) - os mesmos 2 mismatches já corrigidos no smoke test do `cd.yml`: `register` não enviava `name`; upload lia `id` em vez de `videoId`.
 
-### [Epic 013 - Demo Frontend] Testado via Playwright contra o cluster real - PARCIALMENTE VALIDADO 2026-07-23
+### [Epic 013 - Demo Frontend] Testado via Playwright contra o cluster real - RESOLVED 2026-07-23
 
-Fluxo de login + upload funcionou de ponta a ponta na UI real (Playwright headless), após configurar `IDENTITY_CORS_ALLOWED_ORIGINS`/`VIDEO_CORS_ALLOWED_ORIGINS` para o origin local usado no teste. O vídeo de teste ficou preso em `PROCESSING` porque a sessão AWS Academy expirou/foi cancelada no meio do teste (confirmado: toda chamada AWS - EKS, RDS, S3, CloudWatch - passou a retornar `AccessDenied` pela policy `voc-cancel-cred`), não por um bug do frontend ou do backend.
+Fluxo completo (login -> upload -> PROCESSING -> PROCESSED -> download) validado de ponta a ponta na UI real (Playwright headless), após configurar `IDENTITY_CORS_ALLOWED_ORIGINS`/`VIDEO_CORS_ALLOWED_ORIGINS` para o origin local usado no teste. Zero erros de console no navegador.
 
-**Pendente:** repetir o clique-a-clique (login -> upload -> PROCESSED -> download) numa sessão AWS Academy nova para confirmar o fluxo completo até o fim.
+Numa primeira tentativa o vídeo de teste ficou preso em `PROCESSING` porque a sessão AWS Academy expirou/foi cancelada no meio do teste (confirmado: toda chamada AWS - EKS, RDS, S3, CloudWatch - passou a retornar `AccessDenied` pela policy `voc-cancel-cred`), não um bug do frontend ou do backend. Repetido com sucesso numa sessão AWS Academy nova: upload concluído, status avançou para `PROCESSED` em ~9s, download via URL presigned do S3 retornou um `.zip` válido (2 frames extraídos, `frame_0001.jpg`/`frame_0002.jpg`).
+
+**Critério de resolução:** atendido - a execução manual (via Playwright) do fluxo de 4 passos em um browser real contra o backend real completou sem erros de console.
 
 ### [Epic 014 - Documentation & Test Alignment] LocalStack S3/SNS/SQS integration tests - RESOLVED 2026-07-21
 
@@ -124,9 +128,17 @@ Fluxo de login + upload funcionou de ponta a ponta na UI real (Playwright headle
 
 **Critério de resolução:** atendido - each of the 3 services has at least one LocalStack-backed integration test for its AWS adapter(s), verified passing in CI.
 
-(Epic 013 entry moved above - see "Testado via Playwright contra o cluster real" earlier in this section.)
+**Auditoria das 10 tasks do Epic 014 (2026-07-23), antes de avançar para o Epic 017:** revisadas todas as 10 tasks listadas no roadmap. 9 já estavam concluídas (testes + ArchUnit do identity-service, `ownerEmail` no event-catalog, `authentication.md` com refresh/logout, READMEs atualizados, `processing_db` documentado, ECR vs GHCR documentado, HLD já em kebab-case, LocalStack - task 9 acima). Task 10 (`application.port` vs `application.ports`) estava incompleta: `ADR-011-microservice-scaffolding.md` (linhas 77-78) ainda documentava `port/in`/`port/out` (singular), divergindo do código real e das LLDs (`application.ports.in`/`application.ports.out`, já corretas). Corrigido nesta sessão - alterado apenas o diagrama de pacotes do ADR-011 para `ports/in`/`ports/out`, sem tocar em nenhuma outra decisão arquitetural. **Epic 014 agora com as 10 tasks concluídas.**
 
-**Critério para considerar resolvida:** A manual run through the 4-step flow in a real browser against a real backend completes without console errors.
+### [Epic 017 - Final Release] Documentação de consolidação criada + repositório inteiro sincronizado para pt-BR - RESOLVED 2026-07-23
+
+**Documentos criados** (itens exigidos pelo checklist do Epic 017 que não existiam no repositório): `docs/rf-rnf-traceability.md` (matriz RF/RNF oficial dentro do repo, com RNF-06/07 corrigidos de "Bloqueado" para "Implementado" após o fechamento do Epic 014), `docs/decision-log.md` (decisões de projeto sem ADR formal), `docs/ADR/README.md` (índice dos 16 ADRs) e `docs/troubleshooting.md` (problemas reais encontrados nesta sessão e como resolvê-los). "Architecture Overview"/"Getting Started"/"Deploy Guide"/"API Guide" do checklist já eram cobertos por `docs/HLD/06-architecture-overview.md`, `docs/setup/`, `docs/api/README.md` - sem necessidade de novo arquivo.
+
+**Sincronização de idioma:** todo o repositório (README raiz, `CONTRIBUTING.md`, os 16 ADRs, os 15 HLDs, as 5 LLDs, `docs/api/`, `docs/setup/`, `docs/development/`, `docs/shared/`, `docs/diagrams/`, e os 13 READMEs de subpastas/serviços) foi revisado e traduzido para português do Brasil - a maior parte já estava em pt-BR (só títulos H1 em inglês nos 15 HLDs e algumas linhas de tabela de rastreabilidade nas LLDs); `ADR-011`, `ADR-012`, os 3 arquivos de `docs/setup/` e os 2 arquivos de `docs/development/` estavam 100% em inglês e foram traduzidos por completo, preservando fielmente o conteúdo técnico (nenhuma decisão alterada, só idioma). Bônus: corrigidos 2 arquivos com corrupção de encoding (mojibake) em `docs/HLD/01-solution-overview.md` e `docs/HLD/README.md`.
+
+**READMEs restilizados** (mais amigáveis, ícones, links, instruções, a pedido explícito do usuário): README raiz, `docs/README.md`, `docs/api/README.md`, `docs/HLD/README.md` e os 9 READMEs restantes (`.github/`, `frontend/`, `infrastructure/`, `infrastructure/helm/`, os 4 `services/*/`, `tests/load/`).
+
+**Critério de resolução:** atendido - documentação consolidada, matriz RF/RNF sem nenhuma linha em aberto, repositório consistente em pt-BR.
 
 ---
 

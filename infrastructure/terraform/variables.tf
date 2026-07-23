@@ -76,3 +76,14 @@ variable "ses_manage_identities" {
   type        = bool
   default     = false
 }
+
+variable "new_relic_account_id" {
+  description = "New Relic account ID (Account > API keys), used by the newrelic provider and the dashboard-as-code resource in observability.tf"
+  type        = number
+}
+
+variable "new_relic_api_key" {
+  description = "New Relic User API key (NRAK-...), distinct from the ingest License Key used by the OTel exporters (see cd.yml) - grants read/write on dashboards via NerdGraph"
+  type        = string
+  sensitive   = true
+}

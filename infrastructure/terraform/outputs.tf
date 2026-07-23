@@ -43,3 +43,8 @@ output "ses_sender_email" {
   description = "Value for the notification-service's NOTIFICATION_SENDER_EMAIL env var"
   value       = var.ses_sender_email
 }
+
+output "new_relic_dashboard_url" {
+  description = "Open this to see live traces/latency/error-rate across the 4 services (Epic 016/017 evidence)"
+  value       = newrelic_one_dashboard.fiapx.permalink
+}

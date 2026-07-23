@@ -5,3 +5,10 @@
 # verified addresses you control - each one receives a confirmation link.
 ses_sender_email     = "you@example.com"
 ses_recipient_emails = ["demo-user@example.com"]
+
+# New Relic dashboard-as-code (Epic 016/017 evidence). Account ID and User
+# API key (NRAK-...) come from Account > API keys in the New Relic UI - the
+# User key is distinct from the ingest License Key already stored as the
+# NEW_RELIC_LICENSE_KEY GitHub Actions secret used by cd.yml.
+new_relic_account_id = 1234567
+new_relic_api_key    = "<your-new-relic-user-api-key>"
