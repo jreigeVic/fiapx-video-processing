@@ -1,4 +1,4 @@
-# 04 - Non-Functional Requirements
+# 04 - Requisitos Não Funcionais
 
 ## Objetivo
 

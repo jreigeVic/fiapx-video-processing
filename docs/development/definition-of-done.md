@@ -1,46 +1,46 @@
-# Definition of Done
+# Definicao de Pronto (Definition of Done)
 
-A change is done when every applicable item below is satisfied. This checklist follows the six-stage [engineering workflow](./workflow.md#engineering-workflow).
+Uma mudanca esta pronta quando todos os itens aplicaveis abaixo forem satisfeitos. Esta checklist segue o [fluxo de engenharia](./workflow.md#fluxo-de-engenharia) de seis etapas.
 
 ## Design
 
-- [ ] The task is understood; requirements were not invented.
-- [ ] Only the files required to complete the task were read.
-- [ ] For non-trivial changes, a concise implementation plan was presented before implementation.
+- [ ] A tarefa foi compreendida; nenhum requisito foi inventado.
+- [ ] Apenas os arquivos necessarios para completar a tarefa foram lidos.
+- [ ] Para mudancas nao triviais, um plano de implementacao conciso foi apresentado antes da implementacao.
 
-## Architecture Review
+## Revisao de Arquitetura
 
-- [ ] The change respects existing architecture (Clean/Hexagonal Architecture, DDD, Event-Driven Architecture) and the ADRs in `docs/ADR/`.
-- [ ] Any architectural change is backed by an approved ADR; consolidated architecture was not altered without one.
-- [ ] Approval was obtained before implementing architectural changes.
+- [ ] A mudanca respeita a arquitetura existente (Clean/Hexagonal Architecture, DDD, Event-Driven Architecture) e as ADRs em `docs/ADR/`.
+- [ ] Qualquer mudanca arquitetural esta amparada por uma ADR aprovada; a arquitetura consolidada nao foi alterada sem uma.
+- [ ] A aprovacao foi obtida antes de implementar mudancas arquiteturais.
 
-## Implementation
+## Implementacao
 
-- [ ] Only what the task requires was implemented — no unrelated scope.
-- [ ] Existing code was modified in preference to creating new files, where reasonable.
-- [ ] Existing project conventions were followed.
+- [ ] Apenas o que a tarefa exige foi implementado - sem escopo nao relacionado.
+- [ ] Codigo existente foi modificado em vez de criar novos arquivos, quando razoavel.
+- [ ] As convencoes existentes do projeto foram seguidas.
 
-## Validation
+## Validacao
 
-- [ ] The project builds successfully.
-- [ ] Unit tests pass; integration tests pass where applicable.
-- [ ] JaCoCo coverage was generated and reviewed.
-- [ ] SonarCloud analysis was run and the quality gate reviewed, where configured.
-- [ ] No fragile/flaky tests were introduced.
+- [ ] O projeto compila com sucesso.
+- [ ] Testes unitarios passam; testes de integracao passam quando aplicavel.
+- [ ] A cobertura do JaCoCo foi gerada e revisada.
+- [ ] A analise do SonarCloud foi executada e o quality gate revisado, quando configurado.
+- [ ] Nenhum teste fragil/instavel foi introduzido.
 
-## Code Review
+## Revisao de Codigo
 
-- [ ] Every change was reviewed before merge (see [Code Review Process](./workflow.md#code-review-process)):
-  - Solo development: the author self-reviewed using the PR checklist and a passing CI run.
-  - Team development: at least one independent reviewer approved.
-- [ ] `.github/PULL_REQUEST_TEMPLATE.md` is filled out (description, motivation, impact, test evidence).
+- [ ] Toda mudanca foi revisada antes do merge (ver [Processo de Revisao de Codigo](./workflow.md#processo-de-revisao-de-codigo)):
+  - Desenvolvimento solo: o autor autorrevisou usando a checklist do PR e uma execucao de CI aprovada.
+  - Desenvolvimento em equipe: pelo menos um revisor independente aprovou.
+- [ ] O `.github/PULL_REQUEST_TEMPLATE.md` foi preenchido (descricao, motivacao, impacto, evidencia de teste).
 
 ## Commit
 
-- [ ] Commit messages follow Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `ci:`).
-- [ ] No secrets or credentials are committed.
-- [ ] Documentation was updated where required (HLD/LLD/ADR for architectural changes, per `ai_os/.ai/rules/documentation-rules.md`; `docs/setup/` for platform/infrastructure/CI changes).
+- [ ] As mensagens de commit seguem o Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `ci:`).
+- [ ] Nenhum segredo ou credencial foi commitado.
+- [ ] A documentacao foi atualizada quando necessario (HLD/LLD/ADR para mudancas arquiteturais, conforme `ai_os/.ai/rules/documentation-rules.md`; `docs/setup/` para mudancas de plataforma/infraestrutura/CI).
 
 ---
 
-A new contributor should be able to read this checklist and `docs/development/workflow.md` and understand exactly how to develop inside this project.
+Um novo contribuidor deve conseguir ler esta checklist e o `docs/development/workflow.md` e entender exatamente como desenvolver dentro deste projeto.

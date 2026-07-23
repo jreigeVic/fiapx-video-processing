@@ -1,4 +1,4 @@
-# Video Service LLD
+# LLD - Video Service
 
 ## Objetivo
 
@@ -10,7 +10,7 @@ Gerenciar o ciclo de vida dos videos enviados pelos usuarios, incluindo upload, 
 |--------|----------------------|
 | HLD 06 - Architecture Overview | Microservico Video. |
 | HLD 09 - Event-Driven Architecture | VideoUploaded, VideoProcessed, VideoFailed. |
-| ADR-011 | Naming conventions and package organization. |
+| ADR-011 | Convencoes de nomenclatura e organizacao de pacotes. |
 
 ## Responsabilidades
 

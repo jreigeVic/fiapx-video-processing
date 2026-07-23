@@ -1,4 +1,4 @@
-# Processing Worker LLD
+# LLD - Processing Worker
 
 ## Objetivo
 
@@ -10,7 +10,7 @@ Executar o processamento assincrono dos videos, extraindo frames, gerando arquiv
 |--------|----------------------|
 | HLD 06 - Architecture Overview | Microservico Processing Worker. |
 | HLD 09 - Event-Driven Architecture | Consumo de VideoUploaded, publicacao de VideoProcessed e VideoFailed. |
-| ADR-011 | Naming conventions and package organization. |
+| ADR-011 | Convencoes de nomenclatura e organizacao de pacotes. |
 
 ## Responsabilidades
 

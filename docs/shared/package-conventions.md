@@ -1,15 +1,14 @@
-# Package Conventions
+# Convencoes de Pacotes
 
-This document references ADR-011 and defines package naming and structure for all microservices.
+Este documento referencia a ADR-011 e define a nomenclatura e estrutura de pacotes para todos os microsservicos.
 
-Root package: `com.fiapx.<service>`
+Pacote raiz: `com.fiapx.<service>`
 
-Layers:
+Camadas:
 - configuration
 - api
 - application
 - domain
 - infrastructure
 
-Refer to ADR-011 for full details.
-
+Consultar ADR-011 para detalhes completos.

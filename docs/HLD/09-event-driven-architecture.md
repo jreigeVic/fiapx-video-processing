@@ -1,4 +1,4 @@
-# 09 - Event-Driven Architecture
+# 09 - Arquitetura Orientada a Eventos
 
 ## Objetivo
 

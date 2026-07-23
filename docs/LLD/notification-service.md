@@ -1,4 +1,4 @@
-# Notification Service LLD
+# LLD - Notification Service
 
 ## Objetivo
 
@@ -10,7 +10,7 @@ Consumir eventos de resultado do processamento e enviar notificacoes ao usuario 
 |--------|----------------------|
 | HLD 06 - Architecture Overview | Microservico Notification. |
 | HLD 09 - Event-Driven Architecture | Consumo de VideoProcessed e VideoFailed. |
-| ADR-011 | Naming conventions and package organization. |
+| ADR-011 | Convencoes de nomenclatura e organizacao de pacotes. |
 
 ## Responsabilidades
 

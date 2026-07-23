@@ -1,4 +1,4 @@
-# Component Diagram - Processing Worker
+# Diagrama de Componentes - Processing Worker
 
 ## Objetivo
 

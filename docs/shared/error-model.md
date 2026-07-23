@@ -1,11 +1,10 @@
-# Error Model
+# Modelo de Erro
 
-Standard error payload must be consistent across services. See shared-architecture LLD and ADRs for examples.
+O payload de erro padrao deve ser consistente entre os servicos. Ver LLD de arquitetura compartilhada e os ADRs para exemplos.
 
-Fields:
+Campos:
 - timestamp
 - status
 - error
 - message
 - path
-

@@ -1,92 +1,61 @@
-# Helm - FIAP X Video Processing Platform
+# ☸️ Helm - Plataforma FIAP X de Processamento de Vídeo
 
-Deploys the 4 microservices onto the EKS cluster provisioned by
-`infrastructure/terraform`. See ADR-005 (Kubernetes) and ADR-014 (shared
-RDS instance) for the architectural decisions behind this layout.
+Faz o deploy dos 4 microsserviços no cluster EKS provisionado pelo `infrastructure/terraform`. Veja a [ADR-005](../../docs/ADR/ADR-005-kubernetes.md) (Kubernetes) e a [ADR-014](../../docs/ADR/ADR-014-shared-rds-instance.md) (RDS compartilhado) para as decisões arquiteturais por trás deste layout.
 
-## Chart layout
+## 📚 Sumário
+
+- [Estrutura dos charts](#-estrutura-dos-charts)
+- [Decisões arquiteturais desta fase](#-decisões-arquiteturais-desta-fase)
+- [Pré-requisitos](#-pré-requisitos)
+- [Ordem de deploy](#-ordem-de-deploy)
+- [CD (GitHub Actions)](#-cd-github-actions)
+
+---
+
+## 📦 Estrutura dos charts
 
 ```
 infrastructure/helm/
-├── microservice/     # 1 generic chart, installed 4 times (1 release per service)
-├── cluster-setup/    # 1 release: namespace, shared Secrets, DB bootstrap Job
+├── microservice/     # 1 chart genérico, instalado 4 vezes (1 release por serviço)
+├── cluster-setup/    # 1 release: namespace, Secrets compartilhados, Job de bootstrap do DB
 └── render-aws-values.sh
 ```
 
-Each service is deployed as an **independent Helm release** of the same
-`microservice` chart, matching the independent deploy cycle required by
-HLD-14 (CI/CD) - `helm upgrade identity-service` never touches the other
-3 services.
+Cada serviço é implantado como uma **release Helm independente** do mesmo chart `microservice`, respeitando o ciclo de deploy independente exigido pela HLD-14 (CI/CD) - `helm upgrade identity-service` nunca toca nos outros 3 serviços.
 
-## Architecture decisions specific to this phase
+## 🏗️ Decisões arquiteturais desta fase
 
-- **No Ingress Controller.** The AWS Load Balancer Controller needs IRSA
-  (an EKS OIDC provider + a custom IAM role), both blocked in AWS Academy
-  (`infrastructure/terraform/iam.tf`). `identity-service` and
-  `video-service` instead use a plain Kubernetes `Service type:
-  LoadBalancer`, which EKS's in-tree cloud provider is expected to satisfy
-  with a classic ELB using only the node's `LabRole` - no extra controller
-  to install. This is a documented deviation from the "Ingress Controller"
-  component listed in `docs/HLD/10-deployment-architecture.md`. Not
-  verified against a live cluster in this session (no cluster available
-  here) - if `LabRole` turns out to lack the ELB permissions, this is the
-  first thing to check when validating the first real deploy.
-- **No IRSA / no ServiceAccount annotations.** Pods get AWS credentials
-  from the EKS node's instance profile (same `LabRole`), exactly like the
-  app services already assume when `fiapx.aws.endpoint-override` is blank
-  (SDK default credential chain). No static AWS keys anywhere.
-- **processing-worker and notification-service have no Service.** Neither
-  has an embedded HTTP server (`docs/LLD/processing-worker.md`,
-  `docs/LLD/notification-service.md`) - they only poll SQS. Liveness uses
-  the same `pgrep -f app.jar` exec probe as `docker-compose.yml`; there is
-  no readiness probe because nothing ever routes traffic to them.
-- **HPA on CPU**, per ADR-005/HLD-13's initial strategy (KEDA queue-depth
-  scaling is a documented future evolution, not built here).
+- **Sem Ingress Controller.** O AWS Load Balancer Controller precisa de IRSA (um provedor OIDC do EKS + uma IAM role customizada), ambos bloqueados no AWS Academy (`infrastructure/terraform/iam.tf`). `identity-service` e `video-service` usam, em vez disso, um `Service type: LoadBalancer` puro do Kubernetes, que o cloud provider in-tree do EKS deve satisfazer com um ELB clássico usando apenas a `LabRole` do node - sem controller adicional para instalar. É um desvio documentado do componente "Ingress Controller" listado em `docs/HLD/10-deployment-architecture.md`. Não validado contra um cluster real nesta sessão (sem cluster disponível aqui) - se a `LabRole` não tiver as permissões de ELB, é o primeiro ponto a checar ao validar o primeiro deploy real.
+- **Sem IRSA / sem anotações de ServiceAccount.** Os Pods recebem credenciais AWS do instance profile do node EKS (a mesma `LabRole`), exatamente como os serviços já assumem quando `fiapx.aws.endpoint-override` está em branco (cadeia de credenciais padrão do SDK). Nenhuma chave AWS estática em lugar nenhum.
+- **processing-worker e notification-service não têm Service.** Nenhum dos dois tem servidor HTTP embutido (`docs/LLD/processing-worker.md`, `docs/LLD/notification-service.md`) - só fazem polling no SQS. A liveness usa o mesmo probe exec `pgrep -f app.jar` do `docker-compose.yml`; não há readiness probe porque nada roteia tráfego para eles.
+- **HPA baseado em CPU**, conforme a estratégia inicial da ADR-005/HLD-13 (escalonamento por profundidade de fila via KEDA é uma evolução futura documentada, não implementada aqui).
 
-## Prerequisites
+## ✅ Pré-requisitos
 
-1. `terraform apply` already ran (`infrastructure/terraform`) and the EKS
-   cluster exists.
-2. Point `kubectl`/`helm` at the cluster:
+1. `terraform apply` já rodou (`infrastructure/terraform`) e o cluster EKS existe.
+2. Aponte `kubectl`/`helm` para o cluster:
    ```bash
    aws eks update-kubeconfig --name "$(terraform -chdir=infrastructure/terraform output -raw eks_cluster_name)"
    ```
-3. **metrics-server** - not shipped by EKS by default, but required for
-   the HPAs to compute a CPU target (without it they report
-   `<unknown>` and never scale). Install the upstream manifest once per
-   cluster:
+3. **metrics-server** - não vem por padrão no EKS, mas é necessário para os HPAs calcularem um alvo de CPU (sem ele reportam `<unknown>` e nunca escalam). Instale o manifesto upstream uma vez por cluster:
    ```bash
    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
    ```
-4. Images pushed to ECR for all 4 services. Dispatch the `build-push-ecr`
-   job of `.github/workflows/cd.yml` (`gh workflow run cd.yml`) - it needs
-   3 repository secrets refreshed from the active AWS Academy lab session
-   (credentials rotate every ~4h): `AWS_ACCESS_KEY_ID`,
-   `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`.
-5. Optionally, `NEW_RELIC_LICENSE_KEY` as a repository secret (doesn't
-   rotate like the 3 above). When present, the `deploy` job's "Sync New
-   Relic license key" step applies it directly to the
-   `fiapx-newrelic-license` Kubernetes Secret on every dispatch, ahead of
-   the microservice rollout - keeping observability (ADR-015) live without
-   a manual `helm upgrade cluster-setup` step. When absent, that step is
-   skipped and pods keep whatever value the Secret already has (see step
-   comment in `cd.yml` for the Helm/kubectl ownership caveat).
+4. Imagens publicadas no ECR para os 4 serviços. Dispare o job `build-push-ecr` de `.github/workflows/cd.yml` (`gh workflow run cd.yml`) - ele precisa de 3 secrets do repositório atualizados a partir da sessão ativa do AWS Academy (as credenciais rotacionam a cada ~4h): `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`.
+5. Opcionalmente, `NEW_RELIC_LICENSE_KEY` como secret do repositório (não rotaciona como os 3 acima). Quando presente, o passo "Sync New Relic license key" do job `deploy` aplica o valor direto no Secret Kubernetes `fiapx-newrelic-license` a cada disparo, antes do rollout dos microsserviços - mantendo a observabilidade ([ADR-015](../../docs/ADR/ADR-015-observability-implementation.md)) ativa sem precisar rodar `helm upgrade cluster-setup` manualmente. Quando ausente, esse passo é pulado e os Pods mantêm o valor que já estiver no Secret (veja o comentário do passo em `cd.yml` sobre a responsabilidade compartilhada entre Helm/kubectl).
 
-## Deploy order
+## 🚀 Ordem de deploy
 
-### 1. Generate the AWS overlay values
+### 1. Gerar os values do overlay AWS
 
 ```bash
 cd infrastructure/helm
 ./render-aws-values.sh
 ```
 
-Reads `terraform output` (RDS endpoint, S3 bucket, SES sender, ECR repo
-URLs, region) and writes `infrastructure/helm/generated/*.aws.yaml`
-(gitignored - contains the RDS master password and a generated JWT
-secret). Requires `terraform`, `jq`, and `openssl` on PATH.
+Lê o `terraform output` (endpoint do RDS, bucket S3, remetente SES, URLs dos repositórios ECR, região) e gera `infrastructure/helm/generated/*.aws.yaml` (ignorado pelo Git - contém a senha master do RDS e um segredo JWT gerado). Requer `terraform`, `jq` e `openssl` no PATH.
 
-### 2. cluster-setup (namespace, secrets, DB bootstrap)
+### 2. cluster-setup (namespace, secrets, bootstrap do DB)
 
 ```bash
 helm upgrade --install cluster-setup ./cluster-setup \
@@ -95,16 +64,9 @@ helm upgrade --install cluster-setup ./cluster-setup \
 kubectl wait --for=condition=complete --timeout=120s job/fiapx-db-bootstrap -n fiapx
 ```
 
-This creates the `fiapx` namespace, the `fiapx-db-credentials` and
-`fiapx-jwt-secret` Secrets, and runs a Job that creates the 4 logical
-databases (`auth_db`, `video_db`, `processing_db`, `notification_db`) on
-the shared RDS instance (ADR-014) if they don't already exist - reusing
-the same idempotent logic as
-`infrastructure/docker/postgres/init-databases.sh`. **This must complete
-before step 3**: each service's Flyway migration needs its database to
-already exist.
+Cria o namespace `fiapx`, os Secrets `fiapx-db-credentials` e `fiapx-jwt-secret`, e roda um Job que cria os 4 bancos lógicos (`auth_db`, `video_db`, `processing_db`, `notification_db`) na instância RDS compartilhada ([ADR-014](../../docs/ADR/ADR-014-shared-rds-instance.md)), caso ainda não existam - reaproveitando a mesma lógica idempotente de `infrastructure/docker/postgres/init-databases.sh`. **Isso precisa terminar antes do passo 3**: a migração Flyway de cada serviço precisa que seu banco já exista.
 
-### 3. The 4 service releases
+### 3. As 4 releases de serviço
 
 ```bash
 cd microservice
@@ -122,64 +84,37 @@ helm upgrade --install notification-service . -n fiapx \
   -f values-notification-service.yaml -f ../generated/values-notification-service.aws.yaml
 ```
 
-Each pair of `-f` files must be passed **in this order**: Helm merges
-maps but replaces lists wholesale across `-f` files, and `env` is only
-declared in the generated overlay for this reason (see comments in each
-`values-<service>.yaml`).
+Cada par de `-f` precisa ser passado **nessa ordem**: o Helm faz merge de mapas, mas substitui listas inteiras entre arquivos `-f`, e `env` só é declarado no overlay gerado por esse motivo (veja os comentários em cada `values-<service>.yaml`).
 
-### Find the public endpoints
+### 📍 Encontrar os endpoints públicos
 
 ```bash
 kubectl get svc identity-service video-service -n fiapx
 ```
 
-## CD (GitHub Actions)
+## 🔁 CD (GitHub Actions)
 
-`.github/workflows/cd.yml` is `workflow_dispatch`-only: AWS Academy
-session credentials rotate every ~4h, so there is no long-lived AWS
-identity to trigger this on push. It has 2 jobs:
+`.github/workflows/cd.yml` é `workflow_dispatch`-only: as credenciais da sessão AWS Academy rotacionam a cada ~4h, então não há identidade AWS de longa duração para disparar isso em todo push. Tem 2 jobs:
 
-- **`build-push-ecr`**: builds each service's jar and pushes its image to
-  ECR, tagged by commit SHA and `latest`.
-- **`deploy`**: resolves the environment via live AWS CLI lookups
-  (deterministic names Terraform assigns - no `terraform output` access
-  from CI, since the state is local-only to the operator's machine),
-  then `helm upgrade --install`s the 4 microservice releases (tagged by
-  commit SHA, not `latest` - traceable rollbacks), and runs an end-to-end
-  smoke test (register -> login -> upload a tiny real fixture video via
-  `ffmpeg` -> poll status -> assert `PROCESSED` -> download). **Does not**
-  deploy `cluster-setup` - see the manual steps above, done once per
-  environment.
+- **`build-push-ecr`**: builda o jar de cada serviço e publica a imagem no ECR, marcada com a SHA do commit e `latest`.
+- **`deploy`**: resolve o ambiente via consultas diretas à AWS CLI (nomes determinísticos que o Terraform atribui - sem acesso a `terraform output` a partir do CI, já que o state é local à máquina do operador), depois faz `helm upgrade --install` das 4 releases de microsserviço (marcadas pela SHA do commit, não `latest` - para rollback rastreável), e roda um smoke test end-to-end (registro → login → upload de um vídeo real pequeno via `ffmpeg` → poll de status → valida `PROCESSED` → download). **Não** faz deploy do `cluster-setup` - veja os passos manuais acima, feitos uma vez por ambiente.
 
-### Required repository configuration
+### 🔑 Configuração necessária no repositório
 
-- **Secrets** (refresh every lab session, before dispatching):
-  `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`.
-- **Variable**: `SES_SENDER_EMAIL` (the same address verified in
-  `infrastructure/terraform/terraform.tfvars` / SES, or a placeholder if
-  `ses_manage_identities` is disabled per ADR-016).
+- **Secrets** (atualizar a cada sessão de laboratório, antes de disparar): `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`.
+- **Variable**: `SES_SENDER_EMAIL` (o mesmo endereço verificado em `infrastructure/terraform/terraform.tfvars` / SES, ou um placeholder se `ses_manage_identities` estiver desabilitado conforme a [ADR-016](../../docs/ADR/ADR-016-aws-academy-ses-verification-constraint.md)).
 
-### Per-lab-session runbook
+### 📋 Runbook por sessão de laboratório
 
-1. Start the AWS Academy lab session; copy its temporary credentials.
-2. Update the 3 GitHub secrets above (`gh secret set NAME` or the repo
-   Settings UI).
-3. If infrastructure isn't already up: `terraform apply`
-   (`infrastructure/terraform`), then the one-time manual steps in
-   Prerequisites/Deploy order 1-2 above.
-4. Dispatch the pipeline: `gh workflow run cd.yml`.
-5. Get the public endpoints from the deploy job's summary, or
-   `kubectl get svc identity-service video-service -n fiapx`.
-6. Between sessions, EKS/RDS keep accruing AWS Academy budget whether or
-   not anything is deployed on them; `terraform destroy` if the budget is
-   a concern, `terraform apply` again next session (~15min for EKS to
-   come back, then re-run the manual cluster-setup step once, since a new
-   cluster starts empty).
+1. Inicie a sessão do AWS Academy Lab; copie as credenciais temporárias.
+2. Atualize os 3 secrets do GitHub acima (`gh secret set NOME` ou a UI de Settings do repositório).
+3. Se a infraestrutura ainda não estiver de pé: `terraform apply` (`infrastructure/terraform`), depois os passos manuais únicos de Pré-requisitos/Ordem de deploy 1-2 acima.
+4. Dispare o pipeline: `gh workflow run cd.yml`.
+5. Pegue os endpoints públicos no resumo do job de deploy, ou via `kubectl get svc identity-service video-service -n fiapx`.
+6. Entre sessões, EKS/RDS continuam consumindo orçamento do AWS Academy independentemente de haver algo implantado; rode `terraform destroy` se o orçamento for uma preocupação, e `terraform apply` de novo na próxima sessão (~15min para o EKS voltar, depois rode o passo manual de cluster-setup mais uma vez, já que um cluster novo começa vazio).
 
-## Out of Scope Findings
+## 🔎 Documentação relacionada
 
-- `docs/HLD/14-ci-cd.md` lists **GitHub Container Registry** as the
-  image registry, but `infrastructure/terraform/ecr.tf` (prior epic)
-  provisions **ECR** instead. Pre-existing inconsistency, not introduced
-  by this phase - flagging per CLAUDE.md scope protection rather than
-  editing HLD docs outside the current task.
+- [`docs/HLD/10-deployment-architecture.md`](../../docs/HLD/10-deployment-architecture.md) - arquitetura de deploy
+- [`docs/ADR/`](../../docs/ADR/README.md) - decisões arquiteturais
+- [`infrastructure/README.md`](../README.md) - provisionamento Terraform (AWS)

@@ -1,49 +1,49 @@
-# CI/CD Foundation
+# Fundação de CI/CD
 
-This document describes the Continuous Integration pipeline that validates every Pull Request before merge, per ADR-010.
+Este documento descreve o pipeline de Integração Contínua que valida cada Pull Request antes do merge, conforme ADR-010.
 
-No deployment is performed by this pipeline. CD, Kubernetes deployment, AWS provisioning, Terraform and release automation are explicitly out of scope and left for a future task.
+Nenhum deployment é realizado por este pipeline. CD, deployment em Kubernetes, provisionamento AWS, Terraform e automação de release estão explicitamente fora do escopo e ficam para uma tarefa futura.
 
 ---
 
 ## Workflow
 
-**File:** [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)
+**Arquivo:** [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)
 
-**Triggers:**
+**Gatilhos:**
 
-- `pull_request` targeting `main`.
-- `workflow_dispatch` (manual run).
+- `pull_request` direcionado a `main`.
+- `workflow_dispatch` (execução manual).
 
-**Strategy:** a single job (`build-test-analyze`) runs as a matrix over the four independent Gradle projects under `services/`:
+**Estratégia:** um único job (`build-test-analyze`) roda como uma matrix sobre os quatro projetos Gradle independentes em `services/`:
 
 - `identity-service`
 - `notification-service`
 - `processing-worker`
 - `video-service`
 
-Each matrix run is independent (`fail-fast: false`), matching ADR-010's requirement that each service has an independent build.
+Cada execução da matrix é independente (`fail-fast: false`), atendendo ao requisito do ADR-010 de que cada serviço tenha um build independente.
 
-### Steps per service
+### Passos por serviço
 
-1. **Checkout** the repository.
-2. **Set up Java 21 (Temurin)** and **Gradle 8.8**, matching the toolchain declared in each `build.gradle.kts` and `gradle-wrapper.properties`.
-3. **Resolve Gradle command** — use `./gradlew` when a service has a committed wrapper, otherwise fall back to the system-installed `gradle` (see decision below).
-4. **Build and run unit tests** — `build` task (runs `test` as a dependency).
-5. **Generate JaCoCo coverage report** — `jacocoTestReport`, producing `build/reports/jacoco/test/jacocoTestReport.xml`. The report is uploaded as a workflow artifact regardless of build outcome.
-6. **SonarCloud analysis** — `sonar` task, only when `SONAR_TOKEN` is configured (see below). This keeps the workflow usable before SonarCloud is wired up, and avoids failing PRs from environments where the secret isn't available.
-7. **Build Docker image** — reuses each service's existing `Dockerfile`, tagged `fiapx/<service>:ci`. The image is built locally in the runner only; it is never pushed to any registry (ECR publishing is CD, out of scope here).
-8. **Trivy vulnerability scan (preparation)** — scans the image just built and uploads SARIF results to the repository's Security tab. `exit-code: '0'` means the scan never fails the build; this is scan *preparation*, not an enforced gate. Turning it into a blocking gate is a future decision.
+1. **Checkout** do repositório.
+2. **Configuração do Java 21 (Temurin)** e do **Gradle 8.8**, correspondendo ao toolchain declarado em cada `build.gradle.kts` e `gradle-wrapper.properties`.
+3. **Resolução do comando Gradle** — usa `./gradlew` quando um serviço possui um wrapper commitado, caso contrário recorre ao `gradle` instalado no sistema (veja a decisão abaixo).
+4. **Build e execução dos testes unitários** — task `build` (executa `test` como dependência).
+5. **Geração do relatório de cobertura JaCoCo** — `jacocoTestReport`, produzindo `build/reports/jacoco/test/jacocoTestReport.xml`. O relatório é enviado como artefato do workflow independentemente do resultado do build.
+6. **Análise do SonarCloud** — task `sonar`, apenas quando `SONAR_TOKEN` está configurado (veja abaixo). Isso mantém o workflow utilizável antes de o SonarCloud estar conectado, e evita falhar PRs em ambientes onde o secret não está disponível.
+7. **Build da imagem Docker** — reutiliza o `Dockerfile` já existente de cada serviço, com a tag `fiapx/<service>:ci`. A imagem é construída localmente apenas no runner; ela nunca é enviada (push) para nenhum registry (a publicação no ECR é responsabilidade do CD, fora do escopo aqui).
+8. **Scan de vulnerabilidades com Trivy (preparação)** — escaneia a imagem recém-construída e envia os resultados SARIF para a aba Security do repositório. `exit-code: '0'` significa que o scan nunca falha o build; isto é *preparação* do scan, não um gate obrigatório. Transformá-lo em um gate bloqueante é uma decisão futura.
 
 ---
 
-## Architectural Decisions
+## Decisões Arquiteturais
 
-### Sonar host URL is the one Sonar setting that lives in `build.gradle.kts`
+### A URL do host do Sonar é a única configuração do Sonar que reside no `build.gradle.kts`
 
-`jacoco` and `org.sonarqube` are applied in every service's `build.gradle.kts`. Environment-specific values — token, organization, project key — are still passed from the workflow as `-D` system properties, not hardcoded, per ADR-002's consequence that "configuration must be external to code."
+`jacoco` e `org.sonarqube` são aplicados no `build.gradle.kts` de cada serviço. Valores específicos de ambiente — token, organization, project key — continuam sendo passados pelo workflow como system properties `-D`, não fixados no código, conforme a consequência do ADR-002 de que "a configuração deve ser externa ao código."
 
-`sonar.host.url` is the one exception, and is now set directly in each `build.gradle.kts`:
+`sonar.host.url` é a única exceção, e agora é definido diretamente em cada `build.gradle.kts`:
 
 ```kotlin
 sonarqube {
@@ -53,107 +53,107 @@ sonarqube {
 }
 ```
 
-Without an explicit `sonar.host.url`, the Gradle Sonar plugin defaults to a local SonarQube server (`http://localhost:9000`). That default is wrong for this project: ADR-010 commits the platform to **SonarQube Cloud**, not a self-hosted SonarQube server — this is a fixed architectural choice, not a per-environment secret or a value that changes between developer machines, CI, or SonarCloud organizations. Treating it like the other three values (an `-D` flag supplied only by `ci.yml`) meant `gradle sonar` silently pointed at a local server by default for anyone running it outside CI — the opposite of the intended behavior. Hardcoding it in the build file makes SonarCloud the default everywhere the `sonar` task runs, while token/organization/project key still flow in from the environment because those *do* vary.
+Sem um `sonar.host.url` explícito, o plugin Gradle Sonar assume por padrão um servidor SonarQube local (`http://localhost:9000`). Esse padrão está errado para este projeto: o ADR-010 compromete a plataforma com o **SonarQube Cloud**, não um servidor SonarQube autogerenciado — esta é uma escolha arquitetural fixa, não um secret por ambiente ou um valor que muda entre máquinas de desenvolvedores, CI ou organizações do SonarCloud. Tratá-lo como os outros três valores (uma flag `-D` fornecida apenas pelo `ci.yml`) fazia com que `gradle sonar` apontasse silenciosamente para um servidor local por padrão para qualquer pessoa executando fora do CI — o oposto do comportamento pretendido. Fixá-lo no arquivo de build torna o SonarCloud o padrão em todo lugar onde a task `sonar` roda, enquanto token/organization/project key continuam vindo do ambiente porque esses valores *de fato* variam.
 
-**Validated:** running `gradle sonar` locally (no `-D` flags, no token) now fails with `You must define the following mandatory properties for '<service>': sonar.organization` instead of attempting to reach `localhost:9000`. `sonar.organization` is a SonarCloud-only requirement the plugin enforces — the Gradle Sonar plugin does not ask for it when targeting a self-hosted SonarQube server — so this error is direct proof the plugin is resolving `sonar.host.url` to SonarCloud by default now, for all four services.
+**Validado:** executar `gradle sonar` localmente (sem flags `-D`, sem token) agora falha com `You must define the following mandatory properties for '<service>': sonar.organization` em vez de tentar acessar `localhost:9000`. `sonar.organization` é um requisito exclusivo do SonarCloud imposto pelo plugin — o plugin Gradle Sonar não o exige ao apontar para um servidor SonarQube autogerenciado — então esse erro é prova direta de que o plugin agora resolve `sonar.host.url` para o SonarCloud por padrão, nos quatro serviços.
 
-`ci.yml`'s `sonar` step no longer passes `-Dsonar.host.url` (removed as a now-redundant duplicate of the build-file default); it still passes `-Dsonar.token`, `-Dsonar.organization` and `-Dsonar.projectKey`, which remain CI-supplied secrets/variables.
+O passo `sonar` do `ci.yml` não passa mais `-Dsonar.host.url` (removido por ser agora uma duplicata redundante do padrão do arquivo de build); ele ainda passa `-Dsonar.token`, `-Dsonar.organization` e `-Dsonar.projectKey`, que permanecem como secrets/variáveis fornecidos pelo CI.
 
-### One SonarCloud project per service
+### Um projeto SonarCloud por serviço
 
-Given each `services/*` directory is an independently built Gradle project (own `settings.gradle.kts`, own `gradlew` where present) rather than a Gradle multi-module build, each service is analyzed as its own SonarCloud project rather than merged into one combined analysis. The project key is derived by convention:
+Dado que cada diretório em `services/*` é um projeto Gradle construído de forma independente (com seu próprio `settings.gradle.kts`, e seu próprio `gradlew` quando presente) em vez de um build Gradle multi-módulo, cada serviço é analisado como seu próprio projeto SonarCloud em vez de ser mesclado em uma análise combinada única. A project key é derivada por convenção:
 
 ```
 <SONAR_PROJECT_KEY>-<service-name>
 ```
 
-e.g. with `SONAR_PROJECT_KEY=fiapx-video-processing`, the Video Service is analyzed under `fiapx-video-processing-video-service`. All services share the same `SONAR_ORGANIZATION`.
+por exemplo, com `SONAR_PROJECT_KEY=fiapx-video-processing`, o Video Service é analisado sob `fiapx-video-processing-video-service`. Todos os serviços compartilham a mesma `SONAR_ORGANIZATION`.
 
-### Prefer `./gradlew`, fall back to a pinned system Gradle
+### Preferir `./gradlew`, com fallback para um Gradle de sistema fixado
 
-Each step resolves `./gradlew` when present and only falls back to a system-installed `gradle`. `video-service` is currently missing its `gradlew`/`gradlew.bat` launcher and wrapper jar — a pre-existing gap that `ci-scaffold.yml` already fills in by generating and committing wrappers on push. Rather than depend on that separate automation having run, `gradle/actions/setup-gradle` installs Gradle `8.8` as a fallback, matching the version now pinned in every service's `gradle-wrapper.properties` (see below), so the pipeline works identically whether or not a wrapper is present.
+Cada passo resolve `./gradlew` quando presente e só recorre a um `gradle` instalado no sistema como fallback. O `video-service` atualmente não possui seu launcher `gradlew`/`gradlew.bat` e o jar do wrapper — uma lacuna pré-existente que o `ci-scaffold.yml` já preenchia gerando e commitando wrappers a cada push. Em vez de depender daquela automação separada ter sido executada, `gradle/actions/setup-gradle` instala o Gradle `8.8` como fallback, correspondendo à versão agora fixada no `gradle-wrapper.properties` de cada serviço (veja abaixo), de forma que o pipeline funciona identicamente com ou sem um wrapper presente.
 
-### Gradle wrapper version corrected from 9.5.1 to 8.8
+### Versão do Gradle wrapper corrigida de 9.5.1 para 8.8
 
-Validating the pipeline locally (`./gradlew build`) surfaced a real, pre-existing defect: all four services' `gradle-wrapper.properties` were pinned to Gradle `9.5.1`, which is incompatible with the Spring Boot Gradle plugin `3.3.2` already declared in every `build.gradle.kts` — the `bootJar` task fails outright (`CopyProcessingSpec.getDirMode()`, an API Spring Boot's plugin still expects from the Gradle 8.x line). `ci-scaffold.yml` already declared the project's intended CI Gradle version as `8.4`, confirming `9.5.1` was a mismatch rather than an intentional upgrade. All four `gradle-wrapper.properties` were updated to Gradle `8.8` — the newest 8.x release, fully compatible with both Spring Boot `3.3.2` and JDK 21 — and `ci.yml`'s fallback was aligned to the same version. This was verified by running `build` and `jacocoTestReport` locally for all four services after the change (see Validation Results).
+Validar o pipeline localmente (`./gradlew build`) revelou um defeito real e pré-existente: o `gradle-wrapper.properties` dos quatro serviços estava fixado no Gradle `9.5.1`, que é incompatível com o plugin Gradle do Spring Boot `3.3.2` já declarado em todo `build.gradle.kts` — a task `bootJar` falha completamente (`CopyProcessingSpec.getDirMode()`, uma API que o plugin do Spring Boot ainda espera da linha Gradle 8.x). O `ci-scaffold.yml` já declarava a versão de Gradle de CI pretendida pelo projeto como `8.4`, confirmando que `9.5.1` era uma incompatibilidade e não um upgrade intencional. O `gradle-wrapper.properties` dos quatro serviços foi atualizado para o Gradle `8.8` — o release 8.x mais recente, totalmente compatível tanto com o Spring Boot `3.3.2` quanto com o JDK 21 — e o fallback do `ci.yml` foi alinhado com a mesma versão. Isso foi verificado executando `build` e `jacocoTestReport` localmente para os quatro serviços após a mudança (veja Resultados da Validação).
 
-### Missing `io.spring.dependency-management` plugin added to `identity-service` and `video-service`
+### Plugin `io.spring.dependency-management` ausente adicionado ao `identity-service` e ao `video-service`
 
-`notification-service` and `processing-worker` already declared `id("io.spring.dependency-management") version "1.1.0"`; `identity-service` and `video-service` did not. Without it, the Spring Boot BOM is never imported, so the versionless `implementation("org.springframework.boot:...")` dependencies in those two services fail to resolve (`Could not find org.springframework.boot:spring-boot-starter-web:.`, empty version). This was reproduced locally and fixed by adding the same plugin declaration already used by the other two services — a one-line, unambiguous fix required for `compileJava` to succeed at all.
+`notification-service` e `processing-worker` já declaravam `id("io.spring.dependency-management") version "1.1.0"`; `identity-service` e `video-service` não. Sem ele, o BOM do Spring Boot nunca é importado, então as dependências sem versão `implementation("org.springframework.boot:...")` nesses dois serviços falham ao resolver (`Could not find org.springframework.boot:spring-boot-starter-web:.`, versão vazia). Isso foi reproduzido localmente e corrigido adicionando a mesma declaração de plugin já usada pelos outros dois serviços — uma correção de uma linha, inequívoca, necessária para que `compileJava` sequer tenha sucesso.
 
-### `.gitignore` fix: `.github/` was being silently ignored
+### Correção no `.gitignore`: `.github/` estava sendo silenciosamente ignorado
 
-The blanket `.*` rule added to `.gitignore` in a prior task (to hide `.ai`) also matched `.github`, since it starts with a dot — meaning the new `ci.yml`, `PULL_REQUEST_TEMPLATE.md` and `CODEOWNERS` files were invisible to `git status` and could never be committed. Fixed by adding `!.github/` after the blanket rule, the same negation pattern already used for `.env.example`.
+A regra genérica `.*` adicionada ao `.gitignore` em uma tarefa anterior (para ocultar `.ai`) também correspondia a `.github`, já que ele começa com ponto — significando que os novos arquivos `ci.yml`, `PULL_REQUEST_TEMPLATE.md` e `CODEOWNERS` eram invisíveis para `git status` e nunca poderiam ser commitados. Corrigido adicionando `!.github/` após a regra genérica, o mesmo padrão de negação já usado para `.env.example`.
 
-### `ci-scaffold.yml` removed (TASK-002.6)
+### `ci-scaffold.yml` removido (TASK-002.6)
 
-`.github/workflows/ci-scaffold.yml` was a leftover from the TASK-002.1 scaffolding step: it regenerated Gradle wrappers on every push to `services/**` using Gradle 8.4 (inconsistent with the 8.8 pinned everywhere else) via a deprecated action, then auto-committed and pushed the result with `contents: write`. It was never a Pull Request gate and was never referenced by any other documentation. Its only real purpose — keeping the Gradle wrapper present and reproducible — is now handled directly by committing each service's wrapper jar and `gradlew` script (see the wrapper-reproducibility fix below), so the workflow was removed as redundant and risky (an auto-push workflow racing with real PR work).
-
----
-
-## Known Pre-Existing Defects Surfaced by This Pipeline (Not Fixed)
-
-Running the pipeline locally against a real PostgreSQL 16 instance (the one provisioned in TASK-002.3) surfaced two pre-existing application-level defects, deliberately **not** fixed here — they are outside "CI/CD foundation" scope and require an application-level decision, not a build-tooling one:
-
-- **`video-service` test fails against real PostgreSQL** — its `ApplicationUnitTest` has no `@ActiveProfiles("test")` (unlike `identity-service`, which does and uses an in-memory H2 test profile), so it loads the default `application.yml` datasource and hits a real Flyway/PostgreSQL 16 connection. It fails with `FlywayException: Unsupported Database: PostgreSQL 16.14`, which most likely means the `org.flywaydb:flyway-database-postgresql` module (required by Flyway 10.x for PostgreSQL support) is missing from `video-service`'s dependencies.
-- **`notification-service` is missing the PostgreSQL JDBC driver** — it configures a `spring.datasource.url` and enables Flyway in `application.yml`, but its `build.gradle.kts` never declares `org.postgresql:postgresql`. Its test currently passes only because, without a driver, Spring Boot can't build a `DataSource` bean, so Flyway auto-configuration silently never activates — the service cannot actually connect to its database in a real deployment.
-
-Recommend a follow-up task to decide test-database strategy (H2 vs. Testcontainers vs. real Postgres) and to close the missing-dependency gaps.
+`.github/workflows/ci-scaffold.yml` era um resquício do passo de scaffolding da TASK-002.1: ele regenerava os wrappers do Gradle a cada push para `services/**` usando o Gradle 8.4 (inconsistente com o 8.8 fixado em todo o restante) por meio de uma action obsoleta, e então committava e enviava (push) o resultado automaticamente com `contents: write`. Ele nunca foi um gate de Pull Request e nunca foi referenciado por nenhuma outra documentação. Seu único propósito real — manter o Gradle wrapper presente e reproduzível — agora é tratado diretamente ao commitar o jar do wrapper e o script `gradlew` de cada serviço (veja a correção de reprodutibilidade do wrapper abaixo), então o workflow foi removido por ser redundante e arriscado (um workflow de auto-push competindo com o trabalho real de PR).
 
 ---
 
-## Required GitHub Secrets
+## Defeitos Pré-Existentes Conhecidos Revelados por Este Pipeline (Não Corrigidos)
 
-Configured in the GitHub repository settings (`Settings > Secrets and variables > Actions`), not committed to the repository. Names match [`.env.example`](../../.env.example) from `platform-setup.md`:
+Executar o pipeline localmente contra uma instância real do PostgreSQL 16 (a provisionada na TASK-002.3) revelou dois defeitos pré-existentes em nível de aplicação, deliberadamente **não** corrigidos aqui — eles estão fora do escopo de "fundação de CI/CD" e requerem uma decisão em nível de aplicação, não de ferramental de build:
 
-| Secret | Purpose |
+- **O teste do `video-service` falha contra o PostgreSQL real** — seu `ApplicationUnitTest` não possui `@ActiveProfiles("test")` (diferente do `identity-service`, que possui e usa um perfil de teste H2 em memória), então ele carrega o datasource padrão do `application.yml` e atinge uma conexão real Flyway/PostgreSQL 16. Ele falha com `FlywayException: Unsupported Database: PostgreSQL 16.14`, o que muito provavelmente significa que o módulo `org.flywaydb:flyway-database-postgresql` (exigido pelo Flyway 10.x para suporte ao PostgreSQL) está ausente nas dependências do `video-service`.
+- **O `notification-service` está sem o driver JDBC do PostgreSQL** — ele configura um `spring.datasource.url` e habilita o Flyway no `application.yml`, mas seu `build.gradle.kts` nunca declara `org.postgresql:postgresql`. Seu teste atualmente passa apenas porque, sem um driver, o Spring Boot não consegue construir um bean `DataSource`, então a auto-configuração do Flyway silenciosamente nunca é ativada — o serviço não consegue de fato se conectar ao seu banco de dados em um deployment real.
+
+Recomenda-se uma tarefa de acompanhamento para decidir a estratégia de banco de dados de teste (H2 vs. Testcontainers vs. Postgres real) e para fechar as lacunas de dependências ausentes.
+
+---
+
+## Secrets Obrigatórios do GitHub
+
+Configurados nas configurações do repositório GitHub (`Settings > Secrets and variables > Actions`), não commitados no repositório. Os nomes correspondem ao [`.env.example`](../../.env.example) de `platform-setup.md`:
+
+| Secret | Finalidade |
 |---|---|
-| `SONAR_TOKEN` | Authenticates SonarCloud analysis. When absent, the analysis step is skipped rather than failing the pipeline. |
-| `SONAR_ORGANIZATION` | Shared SonarCloud organization key for all four service projects. |
-| `SONAR_PROJECT_KEY` | Base project key; combined with the service name per service (see above). |
+| `SONAR_TOKEN` | Autentica a análise do SonarCloud. Quando ausente, o passo de análise é ignorado em vez de falhar o pipeline. |
+| `SONAR_ORGANIZATION` | Chave de organização do SonarCloud compartilhada por todos os quatro projetos de serviço. |
+| `SONAR_PROJECT_KEY` | Chave de projeto base; combinada com o nome do serviço por serviço (veja acima). |
 
-`GITHUB_TOKEN` is provided automatically by GitHub Actions and requires no manual setup.
+`GITHUB_TOKEN` é fornecido automaticamente pelo GitHub Actions e não requer configuração manual.
 
-No AWS, ECR or New Relic secrets are required by this workflow — none of its steps use them.
-
----
-
-## Pull Request Template and CODEOWNERS
-
-- [`.github/PULL_REQUEST_TEMPLATE.md`](../../.github/PULL_REQUEST_TEMPLATE.md) — description, motivation, impact and test evidence fields, matching the PR checklist in `.ai/rules/git-rules.md`.
-- [`.github/CODEOWNERS`](../../.github/CODEOWNERS) — currently assigns `@jreigeVic` as the default owner for the whole repository. Update this file as the team grows.
+Nenhum secret de AWS, ECR ou New Relic é necessário para este workflow — nenhum de seus passos os utiliza.
 
 ---
 
-## Manual Steps
+## Template de Pull Request e CODEOWNERS
 
-1. Create a SonarCloud organization and one project per service (or confirm the key convention above matches your SonarCloud setup).
-2. Add `SONAR_TOKEN`, `SONAR_ORGANIZATION` and `SONAR_PROJECT_KEY` as repository secrets.
-3. Enable branch protection on `main` requiring the `build-test-analyze` matrix checks (and CODEOWNERS review) to pass before merge.
-4. Review `.github/CODEOWNERS` and add additional owners as the team grows.
+- [`.github/PULL_REQUEST_TEMPLATE.md`](../../.github/PULL_REQUEST_TEMPLATE.md) — campos de descrição, motivação, impacto e evidência de teste, correspondendo ao checklist de PR em `.ai/rules/git-rules.md`.
+- [`.github/CODEOWNERS`](../../.github/CODEOWNERS) — atualmente atribui `@jreigeVic` como o owner padrão para todo o repositório. Atualize este arquivo conforme a equipe cresce.
 
 ---
 
-## Validation Results
+## Passos Manuais
 
-- **Workflow syntax**: `.github/workflows/ci.yml` passes `actionlint` (via the `rhysd/actionlint` Docker image) with zero findings, including expression/context validation (an initial `if: ${{ secrets.SONAR_TOKEN != '' }}` was caught and fixed — `secrets` isn't a valid context in step-level `if:`). `ci-scaffold.yml` was removed in TASK-002.6 (see above) and is no longer part of the pipeline.
-- **Build**: `./gradlew build` verified locally, after fixes, for all four services:
+1. Criar uma organização SonarCloud e um projeto por serviço (ou confirmar que a convenção de chave acima corresponde à sua configuração do SonarCloud).
+2. Adicionar `SONAR_TOKEN`, `SONAR_ORGANIZATION` e `SONAR_PROJECT_KEY` como secrets do repositório.
+3. Habilitar proteção de branch em `main` exigindo que os checks da matrix `build-test-analyze` (e a revisão do CODEOWNERS) passem antes do merge.
+4. Revisar `.github/CODEOWNERS` e adicionar owners adicionais conforme a equipe cresce.
+
+---
+
+## Resultados da Validação
+
+- **Sintaxe do workflow**: `.github/workflows/ci.yml` passa no `actionlint` (via a imagem Docker `rhysd/actionlint`) sem nenhum achado, incluindo a validação de expressão/contexto (um `if: ${{ secrets.SONAR_TOKEN != '' }}` inicial foi identificado e corrigido — `secrets` não é um contexto válido em `if:` no nível de passo). O `ci-scaffold.yml` foi removido na TASK-002.6 (veja acima) e não faz mais parte do pipeline.
+- **Build**: `./gradlew build` verificado localmente, após as correções, para os quatro serviços:
   - `identity-service`: `BUILD SUCCESSFUL`.
-  - `video-service`: build/compile/`bootJar` succeed; `test` task fails (see Known Pre-Existing Defects).
+  - `video-service`: build/compile/`bootJar` têm sucesso; a task `test` falha (veja Defeitos Pré-Existentes Conhecidos).
   - `notification-service`: `BUILD SUCCESSFUL`.
   - `processing-worker`: `BUILD SUCCESSFUL`.
-- **JaCoCo**: `jacocoTestReport.xml` generated and verified (non-empty, well-formed) for `identity-service`, `notification-service`, `processing-worker`.
-- **SonarCloud configuration**: `org.sonarqube` plugin applied to all four `build.gradle.kts`; workflow step verified to skip cleanly (exit 0) rather than fail when `SONAR_TOKEN` is absent, since no SonarCloud project exists yet for this repository.
-- **SonarCloud host targeting**: `gradle sonar` run locally with no `-D` flags for all four services (`video-service` via `gradle -p ../video-service sonar` from `identity-service`'s wrapper, since its own wrapper was intentionally left untouched). Every service failed identically with `You must define the following mandatory properties for '<service>': sonar.organization` — the SonarCloud-only validation the plugin performs, proving `sonar.host.url` now resolves to SonarCloud by default rather than `localhost:9000`.
-- **Security scan preparation**: Trivy step configured with `exit-code: '0'` (non-blocking) and SARIF upload to the Security tab; not executed end-to-end locally since it depends on the earlier Docker image build step running inside Actions.
+- **JaCoCo**: `jacocoTestReport.xml` gerado e verificado (não vazio, bem formado) para `identity-service`, `notification-service`, `processing-worker`.
+- **Configuração do SonarCloud**: plugin `org.sonarqube` aplicado nos quatro `build.gradle.kts`; passo do workflow verificado para ser ignorado de forma limpa (exit 0) em vez de falhar quando `SONAR_TOKEN` está ausente, já que ainda não existe nenhum projeto SonarCloud para este repositório.
+- **Direcionamento de host do SonarCloud**: `gradle sonar` executado localmente sem flags `-D` para os quatro serviços (`video-service` via `gradle -p ../video-service sonar` a partir do wrapper do `identity-service`, já que seu próprio wrapper foi deliberadamente deixado intocado). Todos os serviços falharam identicamente com `You must define the following mandatory properties for '<service>': sonar.organization` — a validação exclusiva do SonarCloud que o plugin realiza, provando que `sonar.host.url` agora resolve para o SonarCloud por padrão em vez de `localhost:9000`.
+- **Preparação do scan de segurança**: passo do Trivy configurado com `exit-code: '0'` (não bloqueante) e envio de SARIF para a aba Security; não executado ponta a ponta localmente já que depende do passo anterior de build da imagem Docker rodando dentro do Actions.
 
 ---
 
-## Out of Scope
+## Fora do Escopo
 
 - Continuous Deployment.
-- Kubernetes deployment.
-- AWS infrastructure provisioning.
+- Deployment em Kubernetes.
+- Provisionamento de infraestrutura AWS.
 - Terraform.
-- Release automation.
-- Pushing images to a registry (build-only here, for scanning purposes; ECR push is CD's job - `.github/workflows/cd.yml`).
+- Automação de release.
+- Envio (push) de imagens para um registry (aqui é apenas build, para fins de scan; o push para o ECR é responsabilidade do CD - `.github/workflows/cd.yml`).

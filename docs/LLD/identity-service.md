@@ -1,4 +1,4 @@
-# Identity Service LLD
+# LLD - Identity Service
 
 ## Objetivo
 
@@ -34,7 +34,7 @@ Nao pertence ao Identity Service:
 |--------|----------------------|
 | HLD 06 - Architecture Overview | Microservico Identity. |
 | HLD 11 - Security | JWT, Spring Security, BCrypt. |
-| ADR-011 | Naming conventions and package organization. |
+| ADR-011 | Convencoes de nomenclatura e organizacao de pacotes. |
 
 ## Casos de Uso
 

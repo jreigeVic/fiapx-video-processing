@@ -1,6 +1,5 @@
-# API Standards
+# Padroes de API
 
-Follow RESTful design, DTOs as records when appropriate, consistent error responses, validation at controller boundary, authentication via JWT.
+Seguir design RESTful, DTOs como records quando apropriado, respostas de erro consistentes, validacao na borda do controller, autenticacao via JWT.
 
-Refer to LLD and ADR-011 for naming conventions and patterns.
-
+Consultar LLD e ADR-011 para convencoes de nomenclatura e padroes.

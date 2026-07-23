@@ -1,12 +1,12 @@
-# API Docs
+# 📖 Documentação de API
 
-- `openapi.yaml` - versioned HTTP contract for Identity Service and Video Service. Linted in CI (`ci.yml`, `openapi-lint` job).
-- `postman_collection.json` - Postman collection generated from `openapi.yaml`. Regenerate after any endpoint change:
+- `openapi.yaml` - contrato HTTP versionado do Identity Service e do Video Service. Validado no CI (`ci.yml`, job `openapi-lint`).
+- `postman_collection.json` - collection do Postman gerada a partir do `openapi.yaml`. Regenere após qualquer alteração de endpoint:
   ```bash
   npx --yes openapi-to-postmanv2 -s docs/api/openapi.yaml -o docs/api/postman_collection.json -p
   ```
-  CI only verifies the spec still converts successfully (the tool's output includes random UUIDs and randomized examples on every run, so it can never be diffed byte-for-byte against the committed file).
+  O CI só verifica se o spec ainda converte com sucesso (a saída da ferramenta inclui UUIDs e exemplos aleatórios a cada execução, então nunca pode ser comparada byte a byte com o arquivo commitado).
 
-Both Identity Service and Video Service also expose a live, code-generated OpenAPI doc at runtime (Springdoc): `/v3/api-docs` and `/swagger-ui/index.html`, useful for interactive testing against a running instance.
+Tanto o Identity Service quanto o Video Service também expõem documentação OpenAPI viva, gerada a partir do código (Springdoc), em tempo de execução: `/v3/api-docs` e `/swagger-ui/index.html` - útil para testes interativos contra uma instância em execução.
 
-- `authentication.md`, `notification.md`, `processing.md`, `video.md` - narrative documentation per domain area.
+- `authentication.md`, `notification.md`, `processing.md`, `video.md` - documentação narrativa por área de domínio.

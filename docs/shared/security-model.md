@@ -1,8 +1,7 @@
-# Security Model
+# Modelo de Seguranca
 
-Authentication: Identity Service issues JWT. Services validate tokens for protected resources.
+Autenticacao: o Identity Service emite JWT. Os servicos validam os tokens para recursos protegidos.
 
-Secrets: Stored in Kubernetes Secrets. No secrets in repository.
+Segredos: armazenados em Kubernetes Secrets. Nenhum segredo no repositorio.
 
-Refer to HLD 11 and LLD security sections for details.
-
+Consultar HLD 11 e as secoes de seguranca das LLDs para detalhes.

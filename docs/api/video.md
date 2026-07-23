@@ -1,10 +1,10 @@
-# Video API
+# API de Video
 
 ## Objetivo
 
 Documentar os endpoints HTTP do Video Service para upload, consulta, historico e download de resultados.
 
-## Base Path
+## Caminho Base
 
 `/api/videos`
 
@@ -18,7 +18,7 @@ Todos os endpoints exigem JWT valido.
 
 Envia um video para processamento assincrono.
 
-#### Request
+#### Requisicao
 
 `multipart/form-data`
 
@@ -26,7 +26,7 @@ Envia um video para processamento assincrono.
 |-------|------|-------------|
 | file | binary | Sim |
 
-#### Response 202
+#### Resposta 202
 
 ```json
 {
@@ -35,7 +35,7 @@ Envia um video para processamento assincrono.
 }
 ```
 
-#### Status Codes
+#### Codigos de Status
 
 | Status | Motivo |
 |--------|--------|
@@ -48,13 +48,13 @@ Envia um video para processamento assincrono.
 
 Lista o historico de videos do usuario autenticado.
 
-#### Query Parameters
+#### Parametros de Consulta
 
 | Nome | Tipo | Obrigatorio | Descricao |
 |------|------|-------------|-----------|
 | status | string | Nao | Filtra por RECEIVED, PROCESSING, PROCESSED ou FAILED. |
 
-#### Response 200
+#### Resposta 200
 
 ```json
 [
@@ -73,13 +73,13 @@ Lista o historico de videos do usuario autenticado.
 
 Consulta detalhe e status de um video do usuario autenticado.
 
-#### Path Parameters
+#### Parametros de Caminho
 
 | Nome | Tipo | Obrigatorio |
 |------|------|-------------|
 | videoId | uuid | Sim |
 
-#### Response 200
+#### Resposta 200
 
 ```json
 {
@@ -92,7 +92,7 @@ Consulta detalhe e status de um video do usuario autenticado.
 }
 ```
 
-#### Status Codes
+#### Codigos de Status
 
 | Status | Motivo |
 |--------|--------|
@@ -104,7 +104,7 @@ Consulta detalhe e status de um video do usuario autenticado.
 
 Gera URL temporaria para download do ZIP processado.
 
-#### Response 200
+#### Resposta 200
 
 ```json
 {
@@ -114,7 +114,7 @@ Gera URL temporaria para download do ZIP processado.
 }
 ```
 
-#### Status Codes
+#### Codigos de Status
 
 | Status | Motivo |
 |--------|--------|

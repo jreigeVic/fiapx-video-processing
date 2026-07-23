@@ -1,4 +1,4 @@
-# Component Diagram - Video Service
+# Diagrama de Componentes - Video Service
 
 ## Objetivo
 

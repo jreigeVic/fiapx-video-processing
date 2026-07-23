@@ -1,4 +1,4 @@
-# Shared Architecture LLD
+# LLD - Shared Architecture
 
 ## Objetivo
 
@@ -13,7 +13,7 @@ Definir os padroes comuns de implementacao dos microsservicos da FIAP X Video Pr
 | HLD 11 - Security | JWT, Spring Security, BCrypt, Secrets, IAM minimo e URLs pre-assinadas. |
 | HLD 12 - Observability | OpenTelemetry, New Relic, CloudWatch, logs, metricas e traces. |
 | HLD 14 - CI-CD | Build, testes, cobertura, SonarQube, Trivy, Docker e deploy. |
-| ADR-011 | Microservice Scaffolding and Naming Conventions | Package naming, project structure, Gradle organization. |
+| ADR-011 | Convencoes de nomenclatura e escopo de scaffolding de microsservicos | Nomenclatura de pacotes, estrutura de projeto, organizacao do Gradle. |
 
 ## Principios Obrigatorios
 

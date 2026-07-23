@@ -1,4 +1,4 @@
-# Event Catalog
+# Catálogo de Eventos
 
 ## Objetivo
 

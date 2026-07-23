@@ -1,4 +1,4 @@
-# 08 - C4 Container Diagram
+# 08 - Diagrama de Container C4
 
 ## Objetivo
 
@@ -87,7 +87,7 @@ A plataforma utiliza serviços gerenciados para suportar operações específica
 
 ---
 
-# Container Diagram
+# Diagrama de Container
 
 ```mermaid
 flowchart LR

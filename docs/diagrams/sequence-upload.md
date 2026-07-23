@@ -1,4 +1,4 @@
-# Sequence - Upload de Video
+# Diagrama de Sequencia - Upload de Video
 
 ## Objetivo
 

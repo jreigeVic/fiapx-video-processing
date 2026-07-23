@@ -1,22 +1,22 @@
-# Notification Service
+# 📧 Notification Service
 
-Consumes processing outcomes and emails the video's owner for the FIAP X Video Processing Platform (RF-07). No HTTP server by design (`docs/LLD/notification-service.md`) - purely an SQS-polling worker.
+Consome os resultados do processamento e envia e-mail para o dono do vídeo, atendendo o RF-07 da Plataforma FIAP X de Processamento de Vídeo. Sem servidor HTTP por design ([`docs/LLD/notification-service.md`](../../docs/LLD/notification-service.md)) - é puramente um worker que faz polling no SQS.
 
-## Responsibilities
+## 📋 Responsabilidades
 
-- Consumes `VideoProcessed`/`VideoFailed` (SQS `notification-queue`) and sends an email via Amazon SES.
-- Records every attempt as a `Notification` (`SENT` or `FAILED`) in `notification_db`. A `MessageRejectedException` (e.g. unverified SES sandbox identity - see ADR-016) is treated as a permanent delivery failure: the notification is marked `FAILED` and the event is acknowledged, rather than retried indefinitely or crashing the poller.
-- Idempotent via `processed_events` (event id/type), so redelivered SQS messages don't double-send.
+- Consome `VideoProcessed`/`VideoFailed` (fila SQS `notification-queue`) e envia um e-mail via Amazon SES.
+- Registra toda tentativa como uma `Notification` (`SENT` ou `FAILED`) em `notification_db`. Uma `MessageRejectedException` (ex.: identidade do SES sandbox não verificada - veja [ADR-016](../../docs/ADR/ADR-016-aws-academy-ses-verification-constraint.md)) é tratada como falha permanente de entrega: a notificação é marcada `FAILED` e o evento é confirmado (ack), em vez de ser retentado indefinidamente ou travar o poller.
+- Idempotente via `processed_events` (id/tipo do evento), para que mensagens SQS reentregues não gerem envio em duplicidade.
 
-## Architecture
+## 🏗️ Arquitetura
 
-Java 21, Spring Boot 3.3, Gradle (Kotlin DSL), Flyway, PostgreSQL, AWS SDK v2 (SES, SQS). Hexagonal/Clean Architecture (`com.fiapx.notification.{application,domain,infrastructure,configuration}`), enforced by ArchUnit. See `docs/LLD/notification-service.md`.
+Java 21, Spring Boot 3.3, Gradle (Kotlin DSL), Flyway, PostgreSQL, AWS SDK v2 (SES, SQS). Clean/Hexagonal Architecture (`com.fiapx.notification.{application,domain,infrastructure,configuration}`), reforçada por ArchUnit. Veja [`docs/LLD/notification-service.md`](../../docs/LLD/notification-service.md).
 
-## Configuration
+## ⚙️ Configuração
 
-Key environment variables (defaults in `application.yml`): `DB_USER`, `DB_PASSWORD`, `AWS_REGION`, `AWS_ENDPOINT_URL` (blank in AWS), `NOTIFICATION_SENDER_EMAIL`, `NOTIFICATION_QUEUE`, `NOTIFICATION_POLL_DELAY_MS`.
+Principais variáveis de ambiente (valores padrão em `application.yml`): `DB_USER`, `DB_PASSWORD`, `AWS_REGION`, `AWS_ENDPOINT_URL` (em branco na AWS), `NOTIFICATION_SENDER_EMAIL`, `NOTIFICATION_QUEUE`, `NOTIFICATION_POLL_DELAY_MS`.
 
-## Build, run, test
+## ▶️ Build, execução e testes
 
 ```bash
 ./gradlew build

@@ -1,4 +1,4 @@
-# 15 - Architecture Decision Summary
+# 15 - Resumo das Decisões Arquiteturais
 
 ## Objetivo
 

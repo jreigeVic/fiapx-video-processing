@@ -1,4 +1,4 @@
-# 05 - Quality Attributes
+# 05 - Atributos de Qualidade
 
 ## Objetivo
 

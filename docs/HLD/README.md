@@ -2,17 +2,17 @@
 
 ## Objetivo
 
-Este diretório contém a documentação arquitetural de alto nível da plataforma **FIAP X Video Processing**.
+Este diretÃ³rio contÃ©m a documentaÃ§Ã£o arquitetural de alto nÃ­vel da plataforma **FIAP X Video Processing**.
 
-O High Level Design (HLD) descreve a solução sob uma perspectiva arquitetural, apresentando a visão macro do sistema, seus componentes, principais decisões técnicas e como os requisitos funcionais e não funcionais são atendidos.
+O High Level Design (HLD) descreve a soluÃ§Ã£o sob uma perspectiva arquitetural, apresentando a visÃ£o macro do sistema, seus componentes, principais decisÃµes tÃ©cnicas e como os requisitos funcionais e nÃ£o funcionais sÃ£o atendidos.
 
-Esta documentação serve como referência para:
+Esta documentaÃ§Ã£o serve como referÃªncia para:
 
 - Arquitetos de Software
 - Desenvolvedores
 - DevOps Engineers
 - QA Engineers
-- Equipe de Operações
+- Equipe de OperaÃ§Ãµes
 - Ferramentas de IA utilizadas durante o desenvolvimento
 
 ---
@@ -21,28 +21,28 @@ Esta documentação serve como referência para:
 
 | Documento | Objetivo |
 |-----------|----------|
-| 01-solution-overview | Visão geral da solução |
-| 02-business-context | Contexto do negócio |
+| 01-solution-overview | VisÃ£o geral da soluÃ§Ã£o |
+| 02-business-context | Contexto do negÃ³cio |
 | 03-functional-requirements | Requisitos funcionais |
-| 04-non-functional-requirements | Requisitos não funcionais |
+| 04-non-functional-requirements | Requisitos nÃ£o funcionais |
 | 05-quality-attributes | Atributos de qualidade |
-| 06-architecture-overview | Visão arquitetural |
-| 07-c4-context | Context Diagram |
-| 08-c4-container | Container Diagram |
+| 06-architecture-overview | VisÃ£o arquitetural |
+| 07-c4-context | Diagrama de Contexto (C4) |
+| 08-c4-container | Diagrama de Container (C4) |
 | 09-event-driven-architecture | Arquitetura orientada a eventos |
 | 10-deployment-architecture | Arquitetura de infraestrutura |
-| 11-security | Estratégia de segurança |
-| 12-observability | Estratégia de observabilidade |
-| 13-scalability | Estratégia de escalabilidade |
-| 14-ci-cd | Estratégia de CI/CD |
-| 15-decision-summary | Resumo das decisões arquiteturais |
+| 11-security | EstratÃ©gia de seguranÃ§a |
+| 12-observability | EstratÃ©gia de observabilidade |
+| 13-scalability | EstratÃ©gia de escalabilidade |
+| 14-ci-cd | EstratÃ©gia de CI/CD |
+| 15-decision-summary | Resumo das decisÃµes arquiteturais |
 
 ---
 
-# Relação com o LLD
+# RelaÃ§Ã£o com o LLD
 
-O HLD descreve **o que** será construído.
+O HLD descreve **o que** serÃ¡ construÃ­do.
 
-O LLD descreve **como** cada componente será implementado.
+O LLD descreve **como** cada componente serÃ¡ implementado.
 
-Todo documento do LLD deve possuir rastreabilidade para esta documentação.
+Todo documento do LLD deve possuir rastreabilidade para esta documentaÃ§Ã£o.

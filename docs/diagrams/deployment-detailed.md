@@ -1,4 +1,4 @@
-# Deployment Diagram - Detailed
+# Diagrama de Implantação - Detalhado
 
 ## Objetivo
 

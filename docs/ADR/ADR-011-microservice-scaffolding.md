@@ -1,65 +1,65 @@
-# ADR-011: Microservice Scaffolding and Naming Conventions
+# ADR-011 - Scaffolding de Microsservicos e Convencoes de Nomenclatura
 
-Date: 2026-07-13
+Data: 2026-07-13
 Status: Approved
-Context: TASK-002 — Project Scaffolding
+Contexto: TASK-002 — Scaffolding do Projeto
 
-## Decisions
+## Decisoes
 
-### 1. Repository Layout
+### 1. Layout do Repositorio
 
-**Decision: Monorepo**
+**Decisao: Monorepo**
 
-A single repository contains all microservices under the `services/` directory:
+Um unico repositorio contem todos os microsservicos sob o diretorio `services/`:
 - services/
   - identity-service/
   - video-service/
   - processing-worker/
   - notification-service/
 
-This approach enables:
-- Consistent cross-service templates and conventions
-- Unified CI/CD pipeline
-- Simplified tooling and dependency management
-- Maintains independent deployability
+Esta abordagem permite:
+- Templates e convencoes consistentes entre servicos
+- Pipeline de CI/CD unificado
+- Gerenciamento simplificado de ferramentas e dependencias
+- Mantem a capacidade de deploy independente
 
-Alternative considered: Separate repositories per service. Rejected for initial development phase due to increased complexity.
+Alternativa avaliada: Repositorios separados por servico. Rejeitada para a fase inicial de desenvolvimento devido ao aumento de complexidade.
 
-### 2. Gradle Organization
+### 2. Organizacao do Gradle
 
-**Decision: Independent Gradle Projects**
+**Decisao: Projetos Gradle Independentes**
 
-Each microservice contains:
-- Independent `settings.gradle.kts`
-- Independent `build.gradle.kts`
-- Independent Gradle Wrapper (`gradle/wrapper/`, `gradlew.bat`)
-- Independent build lifecycle
+Cada microsservico contem:
+- `settings.gradle.kts` independente
+- `build.gradle.kts` independente
+- Gradle Wrapper independente (`gradle/wrapper/`, `gradlew.bat`)
+- Ciclo de vida de build independente
 
-This approach ensures:
-- Complete autonomy for each service
-- Simplified future migration to separate repositories
-- No shared build configuration dependencies
-- Independent version management
+Esta abordagem garante:
+- Autonomia completa para cada servico
+- Migracao futura simplificada para repositorios separados
+- Nenhuma dependencia de configuracao de build compartilhada
+- Gerenciamento de versao independente
 
-Alternative considered: Multi-project Gradle build with central management. Rejected to preserve microservice independence.
+Alternativa avaliada: Build Gradle multi-projeto com gerenciamento central. Rejeitada para preservar a independencia dos microsservicos.
 
-### 3. Build Tool: Gradle Kotlin DSL
+### 3. Ferramenta de Build: Gradle Kotlin DSL
 
-**Decision: Use Gradle with Kotlin DSL (.kts)**
+**Decisao: Usar Gradle com Kotlin DSL (.kts)**
 
-All Gradle build files use `build.gradle.kts` and `settings.gradle.kts` with Kotlin DSL.
+Todos os arquivos de build Gradle usam `build.gradle.kts` e `settings.gradle.kts` com Kotlin DSL.
 
-Rationale:
-- Type-safe Gradle configuration
-- Superior IDE support in IntelliJ IDEA
-- Modern and recommended approach
-- Better readability and maintainability
+Justificativa:
+- Configuracao Gradle type-safe
+- Suporte superior de IDE no IntelliJ IDEA
+- Abordagem moderna e recomendada
+- Melhor legibilidade e manutenibilidade
 
-### 4. Package Naming Convention
+### 4. Convencao de Nomenclatura de Pacotes
 
-**Decision: Use `com.fiapx.<service>` as root package**
+**Decisao: Usar `com.fiapx.<service>` como pacote raiz**
 
-Each microservice adopts the following package structure:
+Cada microsservico adota a seguinte estrutura de pacotes:
 
 ```
 com.fiapx.identity          (Identity Service)
@@ -68,14 +68,14 @@ com.fiapx.processing         (Processing Worker)
 com.fiapx.notification       (Notification Service)
 ```
 
-Sub-packages follow the layered architecture:
+Os subpacotes seguem a arquitetura em camadas:
 
 ```
 com.fiapx.<service>
   ├── application/
   │   ├── usecase/
-  │   ├── port/in/
-  │   ├── port/out/
+  │   ├── ports/in/
+  │   ├── ports/out/
   │   └── dto/
   ├── domain/
   │   ├── model/
@@ -99,17 +99,17 @@ com.fiapx.<service>
       └── observability/
 ```
 
-Rationale:
-- Clear domain ownership per package
-- Follows Clean Architecture principles
-- Aligns with Hexagonal Architecture patterns
-- Enables independent package evolution
+Justificativa:
+- Propriedade clara do dominio por pacote
+- Segue os principios da Clean Architecture
+- Alinhado com os padroes da Hexagonal Architecture
+- Permite evolucao independente dos pacotes
 
-### 5. Event Naming Convention
+### 5. Convencao de Nomenclatura de Eventos
 
-**Decision: Use PascalCase for Event Names**
+**Decisao: Usar PascalCase para Nomes de Eventos**
 
-All events follow PascalCase naming convention:
+Todos os eventos seguem a convencao de nomenclatura PascalCase:
 
 ```
 VideoUploaded    (Event published when video is uploaded)
@@ -117,29 +117,29 @@ VideoProcessed   (Event published when processing succeeds)
 VideoFailed      (Event published when processing fails)
 ```
 
-Rules:
-- No version suffixes in event names (e.g., `VideoUploadedV1` forbidden)
-- No snake_case or kebab-case
-- No underscores or special characters
-- Future events must follow the same convention
+Regras:
+- Sem sufixos de versao nos nomes de eventos (ex.: `VideoUploadedV1` proibido)
+- Sem snake_case ou kebab-case
+- Sem underscores ou caracteres especiais
+- Eventos futuros devem seguir a mesma convencao
 
-Rationale:
-- Consistent with Java class naming conventions
-- Clear semantic meaning in code
-- Prevents duplicate versioning in event names
-- Aligns with domain-driven design practices
+Justificativa:
+- Consistente com as convencoes de nomenclatura de classes Java
+- Significado semantico claro no codigo
+- Evita versionamento duplicado nos nomes de eventos
+- Alinhado com as praticas de domain-driven design
 
-### 6. Docker Configuration
+### 6. Configuracao do Docker
 
-**Decision: Classic Dockerfile with Fat JAR**
+**Decisao: Dockerfile Classico com Fat JAR**
 
-Each microservice includes:
-- `Dockerfile` using Eclipse Temurin 21 LTS base image
-- Fat JAR packaging (single executable JAR)
-- Alpine Linux base for minimal image size
-- `.dockerignore` to exclude unnecessary files
+Cada microsservico inclui:
+- `Dockerfile` usando a imagem base Eclipse Temurin 21 LTS
+- Empacotamento Fat JAR (um unico JAR executavel)
+- Base Alpine Linux para tamanho minimo de imagem
+- `.dockerignore` para excluir arquivos desnecessarios
 
-Dockerfile Template:
+Template de Dockerfile:
 ```dockerfile
 FROM eclipse-temurin:21-jre-alpine
 ARG JAR_FILE=build/libs/*.jar
@@ -148,17 +148,17 @@ EXPOSE <port>
 ENTRYPOINT ["java","-jar","/app.jar"]
 ```
 
-Rationale:
-- Simple and predictable deployment
-- Minimal image size with Alpine
-- Official Eclipse Temurin image for Java 21
-- Deferred to future tasks: layered images, JVM tuning
+Justificativa:
+- Deploy simples e previsivel
+- Tamanho minimo de imagem com Alpine
+- Imagem oficial Eclipse Temurin para Java 21
+- Adiado para tarefas futuras: imagens em camadas, ajuste de JVM
 
-### 7. Java Version and Toolchain
+### 7. Versao do Java e Toolchain
 
-**Decision: Java 21 with Explicit Gradle Toolchain**
+**Decisao: Java 21 com Toolchain Gradle Explicito**
 
-All services explicitly declare Java 21 toolchain:
+Todos os servicos declaram explicitamente o toolchain Java 21:
 
 ```kotlin
 java {
@@ -168,47 +168,47 @@ java {
 }
 ```
 
-Rationale:
-- Java 21 is the latest LTS release
-- Explicit toolchain ensures consistent builds
-- Gradle automatically downloads correct JDK if not found
-- Future-proof for long-term support
+Justificativa:
+- Java 21 e a versao LTS mais recente
+- Toolchain explicito garante builds consistentes
+- Gradle baixa automaticamente o JDK correto quando nao encontrado
+- Preparado para suporte de longo prazo
 
-### 8. Testing Framework
+### 8. Framework de Testes
 
-**Decision: JUnit 5 + Mockito + Spring Boot Test**
+**Decisao: JUnit 5 + Mockito + Spring Boot Test**
 
-All unit and integration tests use:
-- JUnit 5 (Jupiter) as test engine
-- Mockito for mocking
-- Spring Boot Test starter for integration tests
+Todos os testes unitarios e de integracao usam:
+- JUnit 5 (Jupiter) como test engine
+- Mockito para mocking
+- Spring Boot Test starter para testes de integracao
 
-Rationale:
-- Modern standard for Java testing
-- Excellent Spring Boot integration
-- Comprehensive assertion and mocking capabilities
-- Wide industry adoption
+Justificativa:
+- Padrao moderno para testes em Java
+- Excelente integracao com Spring Boot
+- Capacidades abrangentes de assertion e mocking
+- Ampla adocao pela industria
 
-### 9. Database Migrations
+### 9. Migracoes de Banco de Dados
 
-**Decision: Flyway with Placeholder Initial Migration**
+**Decisao: Flyway com Migracao Inicial Placeholder**
 
-Each microservice includes:
-- Flyway Maven plugin in `build.gradle.kts`
-- `src/main/resources/db/migration/V000__init.sql` (comment-only migration)
-- Flyway configuration in `application.yml`
+Cada microsservico inclui:
+- Plugin Flyway Maven em `build.gradle.kts`
+- `src/main/resources/db/migration/V000__init.sql` (migracao apenas com comentario)
+- Configuracao do Flyway em `application.yml`
 
-Rationale:
-- Ensures Flyway is properly configured
-- Ready for business schema implementation
-- Placeholder migration prevents Flyway errors
-- Database per service principle preserved
+Justificativa:
+- Garante que o Flyway esta configurado corretamente
+- Pronto para implementacao do schema de negocio
+- Migracao placeholder evita erros do Flyway
+- Principio de Database per Service preservado
 
-### 10. Configuration Management
+### 10. Gerenciamento de Configuracao
 
-**Decision: Spring Boot application.yml with Environment-Specific Profiles**
+**Decisao: Spring Boot application.yml com Perfis Especificos por Ambiente**
 
-Each service includes four configuration profiles:
+Cada servico inclui quatro perfis de configuracao:
 
 ```
 application.yml       (Base configuration)
@@ -217,149 +217,149 @@ application-dev.yml   (Development environment)
 application-test.yml  (Test environment)
 ```
 
-Rationale:
-- Standard Spring Boot conventions
-- Environment-specific properties isolation
-- No production credentials in code
-- Easy profile activation per deployment target
+Justificativa:
+- Convencoes padrao do Spring Boot
+- Isolamento de propriedades especificas por ambiente
+- Nenhuma credencial de producao no codigo
+- Ativacao facil de perfil por alvo de deploy
 
-### 11. Observability Preparation
+### 11. Preparacao para Observabilidade
 
-**Decision: Placeholder Structure Only, No Exporters Configured**
+**Decisao: Apenas Estrutura Placeholder, Sem Exporters Configurados**
 
-Each microservice includes:
-- Project structure ready for OpenTelemetry
-- No New Relic agent configuration
-- No exporter implementations
-- Deferred to future implementation tasks
+Cada microsservico inclui:
+- Estrutura de projeto pronta para OpenTelemetry
+- Nenhuma configuracao de agente New Relic
+- Nenhuma implementacao de exporter
+- Adiado para tarefas futuras de implementacao
 
-Rationale:
-- Infrastructure concerns deferred to ops
-- Avoid premature credential/configuration
-- Implementation belongs in later tasks
-- Observability patterns documented in HLD 12
+Justificativa:
+- Preocupacoes de infraestrutura adiadas para ops
+- Evitar credenciais/configuracao prematuras
+- Implementacao pertence a tarefas posteriores
+- Padroes de observabilidade documentados no HLD 12
 
-### 12. Logging Configuration
+### 12. Configuracao de Logging
 
-**Decision: Spring Boot Default Logging (Logback)**
+**Decisao: Logging Padrao do Spring Boot (Logback)**
 
-Each service uses:
-- Default Spring Boot logging configuration
-- Standard Logback without JSON formatting
-- Deferred structured logging to future tasks
+Cada servico usa:
+- Configuracao de logging padrao do Spring Boot
+- Logback padrao sem formatacao JSON
+- Logging estruturado adiado para tarefas futuras
 
-Rationale:
-- Minimal setup for scaffolding phase
-- Ready for structured logging addition later
-- No custom logging framework dependencies
-- Follows minimal-dependencies principle
+Justificativa:
+- Configuracao minima para a fase de scaffolding
+- Pronto para adicao futura de logging estruturado
+- Nenhuma dependencia de framework de logging customizado
+- Segue o principio de dependencias minimas
 
-### 13. DTO Implementation Style
+### 13. Estilo de Implementacao de DTO
 
-**Decision: Java Records for Immutable DTOs**
+**Decisao: Java Records para DTOs Imutaveis**
 
-When appropriate, use Java `record` for request/response DTOs:
+Quando apropriado, usar `record` do Java para DTOs de request/response:
 
 ```java
 public record LoginRequest(String email, String password) {}
 public record LoginResponse(String accessToken, String tokenType, Long expiresIn) {}
 ```
 
-Rationale:
-- Concise immutable data structures
-- Automatic equals/hashCode/toString
-- Reduced boilerplate code
-- Java 16+ language feature adoption
+Justificativa:
+- Estruturas de dados imutaveis e concisas
+- equals/hashCode/toString automaticos
+- Reducao de codigo boilerplate
+- Adocao de recurso de linguagem do Java 16+
 
-### 14. Shared Libraries
+### 14. Bibliotecas Compartilhadas
 
-**Decision: No Shared Modules**
+**Decisao: Sem Modulos Compartilhados**
 
-Each microservice remains completely autonomous:
-- No shared parent modules
-- No common libraries
-- Minimal code duplication accepted for independence
-- Test utilities duplicated per service as needed
+Cada microsservico permanece completamente autonomo:
+- Nenhum modulo pai compartilhado
+- Nenhuma biblioteca comum
+- Duplicacao minima de codigo aceita em favor da independencia
+- Utilitarios de teste duplicados por servico conforme necessario
 
-Rationale:
-- Preserves microservice independence
-- Avoids implicit coupling
-- Simplifies independent deployment
-- Reduces shared testing infrastructure
+Justificativa:
+- Preserva a independencia dos microsservicos
+- Evita acoplamento implicito
+- Simplifica o deploy independente
+- Reduz a infraestrutura de testes compartilhada
 
-Alternative considered: Create `services/shared` module. Rejected to maintain complete service autonomy.
+Alternativa avaliada: Criar modulo `services/shared`. Rejeitada para manter a autonomia completa dos servicos.
 
-### 15. Controller Implementations
+### 15. Implementacoes de Controller
 
-**Decision: Scaffold Controller Classes Without Endpoints**
+**Decisao: Scaffold de Classes Controller Sem Endpoints**
 
-Each service includes:
-- `@RestController` annotated controller classes
-- No actual endpoints (`@GetMapping`, `@PostMapping`, etc.)
-- No mock responses or demo endpoints
-- Business logic deferred to implementation tasks
+Cada servico inclui:
+- Classes controller anotadas com `@RestController`
+- Nenhum endpoint real (`@GetMapping`, `@PostMapping`, etc.)
+- Nenhuma resposta mock ou endpoint de demonstracao
+- Logica de negocio adiada para tarefas de implementacao
 
-Rationale:
-- Satisfies package organization requirements
-- Prevents premature endpoint exposure
-- Business implementation deferred explicitly
-- Ready for incremental endpoint addition
+Justificativa:
+- Atende aos requisitos de organizacao de pacotes
+- Evita exposicao prematura de endpoints
+- Implementacao de negocio adiada explicitamente
+- Pronto para adicao incremental de endpoints
 
-## Traceability
+## Rastreabilidade
 
-| Reference | Document | Requirement |
+| Referencia | Documento | Requisito |
 |-----------|----------|-------------|
-| HLD 06 | Architecture Overview | Microservices, Clean Architecture, Hexagonal Architecture |
-| ADR-001 | Java 21 decision | Mandatory JDK version |
-| ADR-005 | Kubernetes | Container-ready deployments |
-| LLD Shared | Shared Architecture | Package organization, layers |
-| TASK-002 | Project Scaffolding | Scaffold generation rules |
+| HLD 06 | Architecture Overview | Microsservicos, Clean Architecture, Hexagonal Architecture |
+| ADR-001 | Decisao sobre Java 21 | Versao de JDK obrigatoria |
+| ADR-005 | Kubernetes | Deployments prontos para container |
+| LLD Shared | Shared Architecture | Organizacao de pacotes, camadas |
+| TASK-002 | Project Scaffolding | Regras de geracao do scaffold |
 
-## Implementation Notes
+## Notas de Implementacao
 
-This ADR applies to all four microservices:
+Este ADR se aplica aos quatro microsservicos:
 1. Identity Service (`com.fiapx.identity`)
 2. Video Service (`com.fiapx.video`)
 3. Processing Worker (`com.fiapx.processing`)
 4. Notification Service (`com.fiapx.notification`)
 
-All future microservices must adopt these same conventions.
+Todos os microsservicos futuros devem adotar estas mesmas convencoes.
 
-## Template Reference
+## Referencia de Template
 
-The generated scaffold serves as the reference template for future microservices. Promotion to reusable templates under `.ai/templates/microservice/` requires explicit Software Architect approval.
+O scaffold gerado serve como template de referencia para futuros microsservicos. A promocao para templates reutilizaveis em `.ai/templates/microservice/` requer aprovacao explicita do Software Architect.
 
-## Constraints
+## Restricoes
 
-No architectural decisions may introduce:
-- Additional shared libraries without approval
-- Alternative package naming schemes
-- Different testing frameworks per service
-- Non-standard configuration approaches
-- Build tool alternatives without ADR amendment
+Nenhuma decisao arquitetural pode introduzir:
+- Bibliotecas compartilhadas adicionais sem aprovacao
+- Esquemas alternativos de nomenclatura de pacotes
+- Frameworks de teste diferentes por servico
+- Abordagens de configuracao fora do padrao
+- Alternativas de ferramenta de build sem emenda ao ADR
 
-All constraints are preserved from approved ADRs (001-010).
+Todas as restricoes sao preservadas dos ADRs aprovados (001-010).
 
-### 16. AWS SDK Versioning
+### 16. Versionamento do AWS SDK
 
-**Decision: Use AWS SDK for Java v2 (BOM)**
+**Decisao: Usar AWS SDK for Java v2 (BOM)**
 
-All AWS integrations in the project SHALL use the AWS SDK for Java v2 BOM in Gradle builds. The BOM must be declared as:
+Todas as integracoes AWS no projeto DEVEM usar o AWS SDK for Java v2 BOM nos builds Gradle. O BOM deve ser declarado como:
 
 ```
 implementation(platform("software.amazon.awssdk:bom:2.20.0"))
 ```
 
-and service-specific modules included as needed, for example:
+e modulos especificos por servico incluidos conforme necessario, por exemplo:
 
 - `software.amazon.awssdk:s3`
 - `software.amazon.awssdk:sns`
 - `software.amazon.awssdk:sqs`
 
-Rationale:
-- v2 SDK provides non-blocking clients and improved configuration
-- Single BOM ensures consistent versions across services
+Justificativa:
+- O SDK v2 fornece clientes nao bloqueantes e configuracao aprimorada
+- Um unico BOM garante versoes consistentes entre os servicos
 
-Traceability:
-- Approved in Software Architect review during TASK-002.1
+Rastreabilidade:
+- Aprovado em revisao do Software Architect durante a TASK-002.1
 

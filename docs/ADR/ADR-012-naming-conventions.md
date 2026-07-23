@@ -1,32 +1,32 @@
-# ADR-012 — Naming Conventions
+# ADR-012 - Convencoes de Nomenclatura
 
 Status: Accepted
 
-Date: 2026-07-13
+Data: 2026-07-13
 
-Owner: Software Architect
-
----
-
-# Context
-
-As the project evolves with multiple microservices, APIs, events, infrastructure resources and documentation, a single naming convention is required to ensure consistency, readability and maintainability.
-
-Without a common convention, documentation and implementation may diverge over time, increasing maintenance cost and reducing traceability.
+Responsavel: Software Architect
 
 ---
 
-# Decision
+# Contexto
 
-The project adopts a single naming strategy for all artifacts.
+A medida que o projeto evolui com multiplos microsservicos, APIs, eventos, recursos de infraestrutura e documentacao, uma convencao de nomenclatura unica e necessaria para garantir consistencia, legibilidade e manutenibilidade.
 
-This ADR defines the official naming conventions for the entire solution.
+Sem uma convencao comum, a documentacao e a implementacao podem divergir ao longo do tempo, aumentando o custo de manutencao e reduzindo a rastreabilidade.
 
 ---
 
-# Java Package Convention
+# Decisao
 
-Each microservice shall use its own root package.
+O projeto adota uma unica estrategia de nomenclatura para todos os artefatos.
+
+Este ADR define as convencoes oficiais de nomenclatura para toda a solucao.
+
+---
+
+# Convencao de Pacotes Java
+
+Cada microsservico deve usar seu proprio pacote raiz.
 
 Identity Service
 
@@ -44,15 +44,15 @@ Notification Service
 
 com.fiapx.notification
 
-No alternative package naming shall be used.
+Nenhuma nomenclatura alternativa de pacote deve ser usada.
 
 ---
 
-# Microservice Naming
+# Nomenclatura de Microsservicos
 
-Repository folders shall use kebab-case.
+As pastas do repositorio devem usar kebab-case.
 
-Examples
+Exemplos
 
 identity-service
 
@@ -64,11 +64,11 @@ notification-service
 
 ---
 
-# Event Naming
+# Nomenclatura de Eventos
 
-Domain events shall use PascalCase.
+Os eventos de dominio devem usar PascalCase.
 
-Examples
+Exemplos
 
 VideoUploaded
 
@@ -76,7 +76,7 @@ VideoProcessed
 
 VideoFailed
 
-Avoid:
+Evitar:
 
 video_uploaded
 
@@ -86,17 +86,17 @@ video.uploaded.v1
 
 Video_Uploaded
 
-Unless explicitly approved by the Software Architect.
+A menos que explicitamente aprovado pelo Software Architect.
 
 ---
 
-# API Naming
+# Nomenclatura de API
 
-REST endpoints shall use:
+Os endpoints REST devem usar:
 
 kebab-case
 
-Example
+Exemplo
 
 /api/v1/videos
 
@@ -106,11 +106,11 @@ Example
 
 ---
 
-# Database Naming
+# Nomenclatura de Banco de Dados
 
-Logical databases shall use snake_case.
+Os bancos de dados logicos devem usar snake_case.
 
-Examples
+Exemplos
 
 auth_db
 
@@ -120,11 +120,11 @@ notification_db
 
 ---
 
-# Database Tables
+# Tabelas de Banco de Dados
 
-Tables shall use snake_case.
+As tabelas devem usar snake_case.
 
-Examples
+Exemplos
 
 users
 
@@ -136,13 +136,13 @@ notifications
 
 ---
 
-# Flyway Naming
+# Nomenclatura Flyway
 
-Migration files shall follow:
+Os arquivos de migracao devem seguir:
 
 V<version>__<description>.sql
 
-Examples
+Exemplos
 
 V001__create_users_table.sql
 
@@ -152,13 +152,13 @@ V003__add_processing_status.sql
 
 ---
 
-# Docker Images
+# Imagens Docker
 
-Images shall follow:
+As imagens devem seguir:
 
 fiapx/<service-name>
 
-Examples
+Exemplos
 
 fiapx/identity-service
 
@@ -204,11 +204,11 @@ fiapx-prod
 
 # Terraform
 
-Resources shall follow:
+Os recursos devem seguir:
 
 <provider>_<resource>_<service>
 
-Example
+Exemplo
 
 aws_s3_bucket_video
 
@@ -218,7 +218,7 @@ aws_sns_video
 
 ---
 
-# Git Branches
+# Branches do Git
 
 feature/<name>
 
@@ -230,7 +230,7 @@ release/<version>
 
 ---
 
-# Git Tags
+# Tags do Git
 
 v1.0.0
 
@@ -238,15 +238,15 @@ v1.1.0
 
 v2.0.0
 
-Semantic Versioning shall be adopted.
+Semantic Versioning deve ser adotado.
 
 ---
 
-# Documentation Naming
+# Nomenclatura de Documentacao
 
-Documentation shall use kebab-case.
+A documentacao deve usar kebab-case.
 
-Examples
+Exemplos
 
 architecture-overview.md
 
@@ -260,35 +260,35 @@ event-catalog.md
 
 # Mermaid
 
-Diagram identifiers shall use PascalCase.
+Os identificadores de diagrama devem usar PascalCase.
 
-Components shall use official service names.
-
----
-
-# Benefits
-
-This convention provides:
-
-- consistency;
-- traceability;
-- readability;
-- easier onboarding;
-- simpler automation;
-- easier AI-assisted generation;
-- lower maintenance cost.
+Os componentes devem usar os nomes oficiais dos servicos.
 
 ---
 
-# Consequences
+# Beneficios
 
-All future documentation and implementation shall follow this ADR.
+Esta convencao proporciona:
 
-Any deviation requires explicit Software Architect approval.
+- consistencia;
+- rastreabilidade;
+- legibilidade;
+- onboarding mais facil;
+- automacao mais simples;
+- geracao assistida por IA mais facil;
+- menor custo de manutencao.
 
 ---
 
-# References
+# Consequencias
+
+Toda documentacao e implementacao futura deve seguir este ADR.
+
+Qualquer desvio requer aprovacao explicita do Software Architect.
+
+---
+
+# Referencias
 
 High Level Design
 

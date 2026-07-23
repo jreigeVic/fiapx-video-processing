@@ -1,4 +1,4 @@
-# Component Diagram - Identity Service
+# Diagrama de Componentes - Identity Service
 
 ## Objetivo
 

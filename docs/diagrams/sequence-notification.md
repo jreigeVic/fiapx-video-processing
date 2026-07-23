@@ -1,4 +1,4 @@
-# Sequence - Notificacao de Processamento
+# Diagrama de Sequencia - Notificacao de Processamento
 
 ## Objetivo
 

@@ -1,4 +1,4 @@
-# 03 - Functional Requirements
+# 03 - Requisitos Funcionais
 
 ## Objetivo
 

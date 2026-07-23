@@ -1,4 +1,4 @@
-# 12 - Observability
+# 12 - Observabilidade
 
 ## Objetivo
 

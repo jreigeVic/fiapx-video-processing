@@ -1,4 +1,4 @@
-# 02 - Business Context
+# 02 - Contexto de Negócio
 
 ## Objetivo
 

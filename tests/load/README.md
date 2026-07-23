@@ -1,21 +1,14 @@
-# Load Testing (k6) - Epic 011
+# 🧪 Testes de Carga (k6) - Epic 011
 
-Validates RF-04 and RNF-01/02/03 with objective evidence against the real
-deployment (identity-service and video-service, the 2 public LoadBalancer
-endpoints - ADR-005/HLD-10, no Ingress in this AWS Academy environment).
-Per the approved decision, `VideoUploadedConsumer` is never parallelized
-internally to pass these tests - concurrency comes from SQS competing
-consumers + multiple `processing-worker` replicas + HPA, and that is
-exactly what these scenarios are meant to demonstrate.
+Valida o RF-04 e os RNF-01/02/03 com evidência objetiva contra o deploy real (identity-service e video-service, os 2 endpoints públicos de LoadBalancer - [ADR-005](../../docs/ADR/ADR-005-kubernetes.md)/`docs/HLD/10-deployment-architecture.md`, sem Ingress neste ambiente AWS Academy). Conforme decisão aprovada, o `VideoUploadedConsumer` nunca é paralelizado internamente para passar nesses testes - a concorrência vem do SQS competing consumers + múltiplas réplicas de `processing-worker` + HPA, e é exatamente isso que esses cenários demonstram.
 
-## Prerequisites
+## ✅ Pré-requisitos
 
-- [k6](https://k6.io/docs/get-started/installation/) installed.
-- The platform deployed (Epic 009/010) with public endpoints for
-  identity-service and video-service.
-- `kubectl` pointed at the cluster, for `capture-hpa-evidence.sh`.
+- [k6](https://k6.io/docs/get-started/installation/) instalado.
+- A plataforma implantada (Epic 009/010) com endpoints públicos para identity-service e video-service.
+- `kubectl` apontando para o cluster, para o `capture-hpa-evidence.sh`.
 
-## Running a scenario
+## ▶️ Rodando um cenário
 
 ```bash
 cd tests/load
@@ -24,45 +17,34 @@ VIDEO_BASE_URL="http://<video-lb-hostname>" \
 k6 run scenario-a-burst.js
 ```
 
-Repeat for `scenario-b-sustained.js` and `scenario-c-spike.js`. In a
-second terminal, run `./capture-hpa-evidence.sh` (optionally passing an
-interval in seconds and an output file name) for the duration of each
-scenario to record HPA/replica/pod evidence in parallel - this is what
-proves RNF-02, not just the k6 output.
+Repita para `scenario-b-sustained.js` e `scenario-c-spike.js`. Em um segundo terminal, rode `./capture-hpa-evidence.sh` (opcionalmente passando um intervalo em segundos e um nome de arquivo de saída) durante todo o cenário para registrar evidências de HPA/réplicas/pods em paralelo - isso é o que comprova o RNF-02, não só o output do k6.
 
-## Fixture
+## 🎬 Fixture
 
-`fixtures/sample.mp4` is a tiny (2s, 320x240) real H.264 video generated
-with:
+`fixtures/sample.mp4` é um vídeo H.264 real e pequeno (2s, 320x240), gerado com:
 
 ```bash
 ffmpeg -f lavfi -i "testsrc=duration=2:size=320x240:rate=5" -y fixtures/sample.mp4
 ```
 
-Real enough for `processing-worker`'s ffmpeg frame extraction to succeed
-(unlike arbitrary bytes, which fail ffmpeg and end in `FAILED`, not
-`PROCESSED`).
+Real o suficiente para a extração de frames via ffmpeg do `processing-worker` funcionar (diferente de bytes arbitrários, que falham no ffmpeg e terminam em `FAILED`, não `PROCESSED`).
 
-## Scenarios -> RF/RNF evidence matrix
+## 📊 Cenários → matriz de evidências RF/RNF
 
-| Scenario | Load profile | Threshold | RF/RNF proven |
+| Cenário | Perfil de carga | Threshold | RF/RNF comprovado |
 |---|---|---|---|
-| A - Burst | 50 VUs, 1 iteration each, fired together | `http_req_failed rate==0`, `checks rate==1` | **RNF-03**: the queue (SNS/SQS) absorbs a simultaneous upload spike with zero lost/failed requests |
-| B - Sustained | 10 constant VUs, 5 min, uploading in a loop | `http_req_failed rate<1%`, `checks rate>99%` | **RF-04/RNF-01**: multiple videos processed concurrently over a sustained window, via competing consumers - not internal consumer parallelism |
-| C - Spike | Ramping 5 -> 100 -> 5 VUs | `http_req_failed rate<5%`, `checks rate>95%` | **RNF-02**: horizontal scale-out and scale-in, evidenced by `capture-hpa-evidence.sh`'s replica counts rising then falling with the HPA |
+| A - Burst | 50 VUs, 1 iteração cada, disparadas juntas | `http_req_failed rate==0`, `checks rate==1` | **RNF-03**: a fila (SNS/SQS) absorve um pico simultâneo de uploads com zero requisições perdidas/falhas |
+| B - Sustained | 10 VUs constantes, 5 min, upload em loop | `http_req_failed rate<1%`, `checks rate>99%` | **RF-04/RNF-01**: múltiplos vídeos processados concorrentemente ao longo de uma janela sustentada, via competing consumers - não paralelismo interno do consumer |
+| C - Spike | Rampa 5 → 100 → 5 VUs | `http_req_failed rate<5%`, `checks rate>95%` | **RNF-02**: escalonamento horizontal (scale-out e scale-in), evidenciado pelas contagens de réplicas do `capture-hpa-evidence.sh` subindo e depois descendo com o HPA |
 
-RF-01 (upload), RF-06 (status) and RF-03 (download) are exercised as
-part of every scenario's request flow (`lib/video.js`); they aren't
-separate scenarios since they're the mechanism, not the object, of this
-epic's load tests.
+RF-01 (upload), RF-06 (status) e RF-03 (download) são exercitados como parte do fluxo de requisições de todo cenário (`lib/video.js`); não são cenários separados porque são o mecanismo, não o objeto, dos testes de carga deste épico.
 
-## Interpreting results
+## 🔍 Interpretando os resultados
 
-- If a threshold fails, the summary printed by k6 states which one and
-  by how much - do not average it away; either the environment (HPA
-  min/max replicas, node capacity) needs adjustment, or - only with
-  evidence, per the approved decision - internal consumer parallelism
-  gets reopened as its own decision.
-- `capture-hpa-evidence.sh`'s log file is the artifact to keep as
-  evidence for RNF-02 (Epic 017 consolidation) - it shows replica counts
-  over time, not just the final state.
+- Se um threshold falhar, o resumo impresso pelo k6 informa qual e por quanto - não relativize; ou o ambiente (min/max de réplicas do HPA, capacidade dos nodes) precisa de ajuste, ou - só com evidência, conforme a decisão aprovada - o paralelismo interno do consumer volta a ser discutido como decisão própria.
+- O arquivo de log do `capture-hpa-evidence.sh` é o artefato a manter como evidência do RNF-02 (consolidação da Epic 017) - ele mostra a contagem de réplicas ao longo do tempo, não só o estado final.
+
+## 🔎 Documentação relacionada
+
+- [`docs/rf-rnf-traceability.md`](../../docs/rf-rnf-traceability.md) - rastreabilidade completa de RF/RNF × evidências
+- [`infrastructure/helm/README.md`](../../infrastructure/helm/README.md) - deploy e HPA dos microsserviços

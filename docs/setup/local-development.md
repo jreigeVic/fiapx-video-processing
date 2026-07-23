@@ -1,55 +1,55 @@
-# Local Development Infrastructure
+# Infraestrutura de Desenvolvimento Local
 
-This document describes how to start the local infrastructure required to develop the FIAP X Video Processing Platform.
+Este documento descreve como iniciar a infraestrutura local necessária para desenvolver a FIAP X Video Processing Platform.
 
-It covers only local infrastructure. No CI/CD, Kubernetes, Terraform, AWS infrastructure provisioning or microservice implementation is described here.
-
----
-
-## Scope
-
-Docker Compose provisions the two infrastructure dependencies shared by all microservices:
-
-- **PostgreSQL** — relational database (one logical database per service, per ADR-004 and ADR-007).
-- **LocalStack** — local emulation of the AWS services used by the platform: S3, SNS and SQS (per ADR-002 and ADR-006).
-
-Microservices themselves (`identity-service`, `video-service`, `processing-worker`, `notification-service`) are **not** started by this Docker Compose file. Run them individually (Gradle or your IDE) against the containers started here.
+Ele cobre apenas a infraestrutura local. CI/CD, Kubernetes, Terraform, provisionamento de infraestrutura AWS ou implementação de microsserviços não são descritos aqui.
 
 ---
 
-## Prerequisites
+## Escopo
 
-- Docker Desktop installed and running.
+O Docker Compose provisiona as duas dependências de infraestrutura compartilhadas por todos os microsserviços:
+
+- **PostgreSQL** — banco de dados relacional (um banco de dados lógico por serviço, conforme ADR-004 e ADR-007).
+- **LocalStack** — emulação local dos serviços AWS utilizados pela plataforma: S3, SNS e SQS (conforme ADR-002 e ADR-006).
+
+Os próprios microsserviços (`identity-service`, `video-service`, `processing-worker`, `notification-service`) **não** são iniciados por este arquivo Docker Compose. Execute-os individualmente (Gradle ou sua IDE) contra os containers iniciados aqui.
 
 ---
 
-## Getting Started
+## Pré-requisitos
 
-1. Copy the environment template:
+- Docker Desktop instalado e em execução.
+
+---
+
+## Como Começar
+
+1. Copie o template de ambiente:
 
    ```bash
    cp .env.example .env
    ```
 
-2. Start the infrastructure:
+2. Inicie a infraestrutura:
 
    ```bash
    docker compose up -d
    ```
 
-3. Check that both containers report `healthy`:
+3. Verifique se ambos os containers reportam `healthy`:
 
    ```bash
    docker compose ps
    ```
 
-4. Stop the infrastructure when no longer needed:
+4. Pare a infraestrutura quando não for mais necessária:
 
    ```bash
    docker compose down
    ```
 
-   Add `-v` only if you intend to discard all persisted data (Postgres databases and LocalStack state):
+   Adicione `-v` apenas se você pretende descartar todos os dados persistidos (bancos de dados do Postgres e estado do LocalStack):
 
    ```bash
    docker compose down -v
@@ -57,68 +57,68 @@ Microservices themselves (`identity-service`, `video-service`, `processing-worke
 
 ---
 
-## Services
+## Serviços
 
 ### PostgreSQL
 
-- Image: `postgres:16`.
-- Exposed on `localhost:${POSTGRES_PORT}` (default `5432`).
-- Credentials and port are controlled by `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_PORT` in `.env`.
-- Data is persisted in the named volume `postgres_data`.
+- Imagem: `postgres:16`.
+- Exposto em `localhost:${POSTGRES_PORT}` (padrão `5432`).
+- Credenciais e porta são controladas por `POSTGRES_USER`, `POSTGRES_PASSWORD` e `POSTGRES_PORT` no `.env`.
+- Os dados são persistidos no volume nomeado `postgres_data`.
 - Healthcheck: `pg_isready`.
 
-#### Database initialization strategy
+#### Estratégia de inicialização do banco de dados
 
-Each microservice owns its own logical database (Database per Service, per ADR-004). Rather than hardcoding database names in a SQL script, the Postgres container mounts `infrastructure/docker/postgres/init-databases.sh`, which reads the comma-separated `POSTGRES_MULTIPLE_DATABASES` variable and creates one database per entry, skipping any that already exist.
+Cada microsserviço possui seu próprio banco de dados lógico (Database per Service, conforme ADR-004). Em vez de fixar nomes de bancos de dados em um script SQL, o container do Postgres monta `infrastructure/docker/postgres/init-databases.sh`, que lê a variável `POSTGRES_MULTIPLE_DATABASES` (separada por vírgulas) e cria um banco de dados por entrada, ignorando os que já existem.
 
-Default value:
+Valor padrão:
 
 ```
 POSTGRES_MULTIPLE_DATABASES=auth_db,video_db,processing_db,notification_db
 ```
 
-This keeps the initialization script generic and reusable: adding a database for a future microservice only requires appending its name to `POSTGRES_MULTIPLE_DATABASES` in `.env` — the script itself never needs to change. This scales cleanly as the number of microservices grows, compared to maintaining a separate SQL file per service or hardcoding names in the script.
+Isso mantém o script de inicialização genérico e reutilizável: adicionar um banco de dados para um futuro microsserviço requer apenas incluir seu nome em `POSTGRES_MULTIPLE_DATABASES` no `.env` — o script em si nunca precisa mudar. Isso escala de forma limpa conforme o número de microsserviços cresce, em comparação a manter um arquivo SQL separado por serviço ou fixar nomes diretamente no script.
 
-> Note: the databases above use the names already present in each service's `application.yml` (`auth_db`, `video_db`, `processing_db`, `notification_db`), matching ADR-012's naming examples.
+> Nota: os bancos de dados acima usam os nomes já presentes no `application.yml` de cada serviço (`auth_db`, `video_db`, `processing_db`, `notification_db`), correspondendo aos exemplos de nomenclatura do ADR-012.
 
 ### LocalStack
 
-- Image: `localstack/localstack:3`.
-- Exposed on `localhost:${LOCALSTACK_PORT}` (default `4566`).
-- Emulated services are controlled by `LOCALSTACK_SERVICES` (default `s3,sns,sqs`).
-- Data is persisted in the named volume `localstack_data` (`LOCALSTACK_PERSISTENCE=1`).
+- Imagem: `localstack/localstack:3`.
+- Exposto em `localhost:${LOCALSTACK_PORT}` (padrão `4566`).
+- Os serviços emulados são controlados por `LOCALSTACK_SERVICES` (padrão `s3,sns,sqs`).
+- Os dados são persistidos no volume nomeado `localstack_data` (`LOCALSTACK_PERSISTENCE=1`).
 - Healthcheck: `GET /_localstack/health`.
 
-No buckets, topics or queues are pre-created — resource provisioning is application/business concern and out of scope for this task.
+Nenhum bucket, tópico ou fila é pré-criado — o provisionamento de recursos é uma responsabilidade da aplicação/negócio e está fora do escopo desta tarefa.
 
 ---
 
-## Network and Volumes
+## Rede e Volumes
 
-- Both services join the bridge network `fiapx-network`, allowing future service containers to reach them by hostname (`postgres`, `localstack`) if containerized later.
-- Named volumes (`postgres_data`, `localstack_data`) persist data across `docker compose down`. They are Docker-managed (not bind mounts), so no data files are written into the repository.
+- Ambos os serviços participam da rede bridge `fiapx-network`, permitindo que futuros containers de serviço os alcancem pelo hostname (`postgres`, `localstack`) caso sejam containerizados posteriormente.
+- Os volumes nomeados (`postgres_data`, `localstack_data`) persistem os dados entre execuções de `docker compose down`. Eles são gerenciados pelo Docker (não são bind mounts), então nenhum arquivo de dados é gravado no repositório.
 
 ---
 
-## Environment Variables
+## Variáveis de Ambiente
 
-All variables are documented with placeholders in [`.env.example`](../../.env.example). No real credentials are used — Postgres and LocalStack credentials are local-only development defaults, not secrets.
+Todas as variáveis estão documentadas com placeholders em [`.env.example`](../../.env.example). Nenhuma credencial real é utilizada — as credenciais do Postgres e do LocalStack são padrões de desenvolvimento apenas locais, não segredos.
 
-| Variable | Purpose | Default |
+| Variável | Finalidade | Padrão |
 |---|---|---|
-| `POSTGRES_USER` | Postgres superuser | `postgres` |
-| `POSTGRES_PASSWORD` | Postgres superuser password | `postgres` |
-| `POSTGRES_PORT` | Host port mapped to Postgres | `5432` |
-| `POSTGRES_MULTIPLE_DATABASES` | Comma-separated list of logical databases to create | `auth_db,video_db,processing_db,notification_db` |
-| `LOCALSTACK_PORT` | Host port mapped to LocalStack | `4566` |
-| `LOCALSTACK_SERVICES` | AWS services emulated by LocalStack | `s3,sns,sqs` |
-| `LOCALSTACK_DEBUG` | LocalStack debug logging | `0` |
-| `LOCALSTACK_PERSISTENCE` | Persist LocalStack state to disk | `1` |
+| `POSTGRES_USER` | Superusuário do Postgres | `postgres` |
+| `POSTGRES_PASSWORD` | Senha do superusuário do Postgres | `postgres` |
+| `POSTGRES_PORT` | Porta do host mapeada para o Postgres | `5432` |
+| `POSTGRES_MULTIPLE_DATABASES` | Lista separada por vírgulas dos bancos de dados lógicos a serem criados | `auth_db,video_db,processing_db,notification_db` |
+| `LOCALSTACK_PORT` | Porta do host mapeada para o LocalStack | `4566` |
+| `LOCALSTACK_SERVICES` | Serviços AWS emulados pelo LocalStack | `s3,sns,sqs` |
+| `LOCALSTACK_DEBUG` | Log de debug do LocalStack | `0` |
+| `LOCALSTACK_PERSISTENCE` | Persistir o estado do LocalStack em disco | `1` |
 
 ---
 
-## Troubleshooting
+## Solução de Problemas
 
-- **Port already in use**: change `POSTGRES_PORT` or `LOCALSTACK_PORT` in `.env` if `5432`/`4566` are already bound on your machine.
-- **Container unhealthy**: run `docker compose logs postgres` or `docker compose logs localstack` to inspect startup errors.
-- **Stale data**: `docker compose down -v` removes the named volumes and starts from a clean state on the next `up`.
+- **Porta já em uso**: altere `POSTGRES_PORT` ou `LOCALSTACK_PORT` no `.env` caso `5432`/`4566` já estejam em uso na sua máquina.
+- **Container unhealthy**: execute `docker compose logs postgres` ou `docker compose logs localstack` para inspecionar erros de inicialização.
+- **Dados obsoletos (stale data)**: `docker compose down -v` remove os volumes nomeados e inicia a partir de um estado limpo no próximo `up`.

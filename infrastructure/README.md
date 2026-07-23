@@ -1,40 +1,28 @@
-# Infrastructure
+# ☁️ Infrastructure
 
-Infra-as-code for the FIAP X platform on AWS Academy (Learner Lab), plus
-the LocalStack provisioning used by local development and CI.
+Infraestrutura como código da plataforma FIAP X no AWS Academy (Learner Lab), além do provisionamento do LocalStack usado em desenvolvimento local e no CI.
 
-| Directory | Purpose |
+| Diretório | Propósito |
 |---|---|
-| `terraform/` | AWS provisioning: ECR, RDS, S3, SNS/SQS (+DLQs), SES, EKS |
-| `helm/` | Kubernetes deployment charts (Helm) |
-| `kubernetes/` | Cluster bootstrap manifests and scripts |
-| `localstack/` | LocalStack init script used by docker-compose and CI |
-| `docker/` | Local-development container support (Postgres init) |
+| `terraform/` | Provisionamento AWS: ECR, RDS, S3, SNS/SQS (+DLQs), SES, EKS |
+| `helm/` | Charts de deploy no Kubernetes (Helm) - veja [`helm/README.md`](helm/README.md) |
+| `kubernetes/` | Manifestos e scripts de bootstrap do cluster |
+| `localstack/` | Script de inicialização do LocalStack usado pelo docker-compose e pelo CI |
+| `docker/` | Suporte a containers para desenvolvimento local (init do Postgres) |
 
-## AWS Academy constraints (why the Terraform looks the way it does)
+## 🚧 Restrições do AWS Academy (por que o Terraform é assim)
 
-- **No IAM creation**: the lab blocks `iam:CreateRole`. Everything that
-  needs a role (EKS cluster, node group) reuses the lab-provided
-  **LabRole** via a data source.
-- **No IRSA**: creating an OIDC provider is blocked too, so pods inherit
-  AWS credentials from the **node instance profile**. The services already
-  use the SDK default credential chain when `fiapx.aws.endpoint-override`
-  is blank, so no static keys reach any container.
-- **Session credentials rotate** every ~4h lab session (access key, secret
-  and session token). Export fresh ones before every terraform/kubectl run.
-- **Region**: `us-east-1` only.
-- **SES sandbox**: sender **and** recipients must be verified email
-  identities. Terraform creates the identities; each mailbox still has to
-  click the confirmation link SES sends.
-- **Single RDS instance** hosts the four logical databases (`auth_db`,
-  `video_db`, `processing_db`, `notification_db`) for budget reasons —
-  database-per-service (ADR-004) holds at the logical level (see ADR-014).
+- **Sem criação de IAM**: o laboratório bloqueia `iam:CreateRole`. Tudo que precisa de uma role (cluster EKS, node group) reaproveita a **LabRole** fornecida pelo laboratório via data source.
+- **Sem IRSA**: criar um provedor OIDC também é bloqueado, então os Pods herdam credenciais AWS do **instance profile do node**. Os serviços já usam a cadeia de credenciais padrão do SDK quando `fiapx.aws.endpoint-override` está em branco, então nenhuma chave estática chega a qualquer container.
+- **Credenciais de sessão rotacionam** a cada sessão de laboratório de ~4h (access key, secret e session token). Exporte credenciais novas antes de cada execução de terraform/kubectl.
+- **Região**: apenas `us-east-1`.
+- **SES em sandbox**: remetente **e** destinatários precisam ser identidades de e-mail verificadas. O Terraform cria as identidades; cada caixa de e-mail ainda precisa clicar no link de confirmação enviado pelo SES.
+- **Uma única instância RDS** hospeda os quatro bancos lógicos (`auth_db`, `video_db`, `processing_db`, `notification_db`) por motivo de orçamento — database-per-service (ADR-004) é mantido no nível lógico (veja [ADR-014](../docs/ADR/ADR-014-shared-rds-instance.md)).
 
-## Provisioning runbook
+## 📋 Runbook de provisionamento
 
-1. Start the Learner Lab and open **AWS Details → AWS CLI** to get session
-   credentials.
-2. Export them (PowerShell shown; use `export` on bash):
+1. Inicie o Learner Lab e abra **AWS Details → AWS CLI** para pegar as credenciais de sessão.
+2. Exporte-as (exemplo em PowerShell; use `export` no bash):
 
    ```powershell
    $env:AWS_ACCESS_KEY_ID     = "..."
@@ -43,38 +31,34 @@ the LocalStack provisioning used by local development and CI.
    $env:AWS_DEFAULT_REGION    = "us-east-1"
    ```
 
-3. Provision:
+3. Provisione:
 
    ```sh
    cd infrastructure/terraform
-   cp terraform.tfvars.example terraform.tfvars   # fill in the SES emails
+   cp terraform.tfvars.example terraform.tfvars   # preencha os e-mails do SES
    terraform init
    terraform plan
    terraform apply
    ```
 
-4. Read the outputs that feed the Helm values and the CD workflow:
+4. Leia os outputs que alimentam os values do Helm e o workflow de CD:
 
    ```sh
-   terraform output                     # everything non-sensitive
-   terraform output -raw rds_password   # DB password for the K8s secret
+   terraform output                     # tudo que não é sensível
+   terraform output -raw rds_password   # senha do DB para o secret do K8s
    ```
 
-5. Configure kubectl:
+5. Configure o kubectl:
 
    ```sh
    aws eks update-kubeconfig --name fiapx-eks --region us-east-1
    ```
 
-Terraform state stays **local** (`terraform.tfstate`, gitignored): the lab
-is ephemeral and a remote-state backend would add setup for no benefit
-here. Keep the state file between sessions — the lab account keeps its
-resources when a session ends (only the credentials expire), so the same
-state supports incremental applies and `terraform destroy`.
+O state do Terraform permanece **local** (`terraform.tfstate`, ignorado pelo Git): o laboratório é efêmero e um backend de state remoto adicionaria configuração sem benefício aqui. Mantenha o arquivo de state entre sessões — a conta do laboratório preserva seus recursos quando uma sessão termina (só as credenciais expiram), então o mesmo state suporta applies incrementais e `terraform destroy`.
 
-## Queue topology (mirror of `localstack/init-aws.sh`)
+## 🔀 Topologia das filas (espelha `localstack/init-aws.sh`)
 
-| Topic | → Queue | Consumer |
+| Tópico | → Fila | Consumidor |
 |---|---|---|
 | `video-uploaded` | `video-processing-queue` | processing-worker |
 | `video-processed` | `video-results-queue` | video-service |
@@ -82,9 +66,10 @@ state supports incremental applies and `terraform destroy`.
 | `video-failed` | `video-results-queue` | video-service |
 | `video-failed` | `notification-queue` | notification-service |
 
-Every queue has a `<name>-dlq` dead-letter queue (`maxReceiveCount: 5`),
-and all subscriptions use raw message delivery. `video-processing-queue`
-uses a **15-minute visibility timeout**: ffmpeg jobs run up to 10 minutes,
-and with multiple worker replicas (competing consumers) a shorter timeout
-would redeliver in-flight messages to other replicas — duplicating work
-and pushing legitimately slow jobs into the DLQ.
+Toda fila tem uma dead-letter queue `<name>-dlq` (`maxReceiveCount: 5`), e todas as subscriptions usam raw message delivery. A `video-processing-queue` usa um **visibility timeout de 15 minutos**: os jobs de ffmpeg rodam até 10 minutos, e com múltiplas réplicas do worker (competing consumers) um timeout menor causaria reentrega de mensagens em processamento para outras réplicas — duplicando trabalho e empurrando jobs legitimamente lentos para a DLQ.
+
+## 🔎 Documentação relacionada
+
+- [`infrastructure/helm/README.md`](helm/README.md) - deploy dos microsserviços no Kubernetes
+- [`docs/HLD/10-deployment-architecture.md`](../docs/HLD/10-deployment-architecture.md) - visão arquitetural de deploy
+- [`docs/ADR/`](../docs/ADR/README.md) - decisões arquiteturais (ADR-004, ADR-005, ADR-014, ADR-016)

@@ -1,4 +1,4 @@
-# 07 - C4 Context Diagram
+# 07 - Diagrama de Contexto C4
 
 ## Objetivo
 
@@ -20,7 +20,7 @@ Essas integrações permitem que o processamento ocorra de forma distribuída, r
 
 ---
 
-# C4 - Context Diagram
+# C4 - Diagrama de Contexto
 
 ```mermaid
 flowchart LR

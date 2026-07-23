@@ -1,10 +1,10 @@
-# Authentication API
+# API de Autenticacao
 
 ## Objetivo
 
 Documentar os endpoints HTTP do Identity Service para cadastro, login e consulta do usuario autenticado.
 
-## Base Path
+## Caminho Base
 
 `/api/auth`
 
@@ -19,7 +19,7 @@ Documentar os endpoints HTTP do Identity Service para cadastro, login e consulta
 
 Cria um usuario.
 
-#### Request Body
+#### Corpo da Requisicao
 
 ```json
 {
@@ -29,7 +29,7 @@ Cria um usuario.
 }
 ```
 
-#### Response 201
+#### Resposta 201
 
 ```json
 {
@@ -39,7 +39,7 @@ Cria um usuario.
 }
 ```
 
-#### Status Codes
+#### Codigos de Status
 
 | Status | Motivo |
 |--------|--------|
@@ -51,7 +51,7 @@ Cria um usuario.
 
 Autentica o usuario e retorna JWT.
 
-#### Request Body
+#### Corpo da Requisicao
 
 ```json
 {
@@ -60,7 +60,7 @@ Autentica o usuario e retorna JWT.
 }
 ```
 
-#### Response 200
+#### Resposta 200
 
 ```json
 {
@@ -71,7 +71,7 @@ Autentica o usuario e retorna JWT.
 }
 ```
 
-#### Status Codes
+#### Codigos de Status
 
 | Status | Motivo |
 |--------|--------|
@@ -83,7 +83,7 @@ Autentica o usuario e retorna JWT.
 
 Troca um refresh token valido por um novo par access/refresh token (rotacao). O refresh token e um valor opaco (nao JWT), armazenado em `auth_db` apenas como hash, com expiracao e flag `revoked` (ADR-013).
 
-#### Request Body
+#### Corpo da Requisicao
 
 ```json
 {
@@ -91,7 +91,7 @@ Troca um refresh token valido por um novo par access/refresh token (rotacao). O 
 }
 ```
 
-#### Response 200
+#### Resposta 200
 
 ```json
 {
@@ -102,7 +102,7 @@ Troca um refresh token valido por um novo par access/refresh token (rotacao). O 
 }
 ```
 
-#### Status Codes
+#### Codigos de Status
 
 | Status | Motivo |
 |--------|--------|
@@ -114,7 +114,7 @@ Troca um refresh token valido por um novo par access/refresh token (rotacao). O 
 
 Revoga um refresh token especifico. Requer um access token valido; o access token em si continua stateless (JWT) e nao e revogado - apenas o refresh token informado passa a `revoked=true`.
 
-#### Request Body
+#### Corpo da Requisicao
 
 ```json
 {
@@ -122,7 +122,7 @@ Revoga um refresh token especifico. Requer um access token valido; o access toke
 }
 ```
 
-#### Status Codes
+#### Codigos de Status
 
 | Status | Motivo |
 |--------|--------|
@@ -134,7 +134,7 @@ Revoga um refresh token especifico. Requer um access token valido; o access toke
 
 Retorna dados do usuario autenticado.
 
-#### Response 200
+#### Resposta 200
 
 ```json
 {
@@ -144,7 +144,7 @@ Retorna dados do usuario autenticado.
 }
 ```
 
-#### Status Codes
+#### Codigos de Status
 
 | Status | Motivo |
 |--------|--------|

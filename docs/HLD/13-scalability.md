@@ -1,4 +1,4 @@
-# 13 - Scalability
+# 13 - Escalabilidade
 
 ## Objetivo
 

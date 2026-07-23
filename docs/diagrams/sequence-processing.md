@@ -1,4 +1,4 @@
-# Sequence - Processamento de Video
+# Diagrama de Sequencia - Processamento de Video
 
 ## Objetivo
 

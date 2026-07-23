@@ -1,4 +1,4 @@
-# 06 - Architecture Overview
+# 06 - Visão Geral da Arquitetura
 
 ## Objetivo
 

@@ -1,32 +1,32 @@
-# 01 - Solution Overview
+# 01 - VisÃ£o Geral da SoluÃ§Ã£o
 
 ## Objetivo
 
-Construir uma plataforma Cloud Native para processamento assíncrono de vídeos utilizando uma arquitetura baseada em microsserviços, comunicação orientada a eventos e infraestrutura escalável na AWS.
+Construir uma plataforma Cloud Native para processamento assÃ­ncrono de vÃ­deos utilizando uma arquitetura baseada em microsserviÃ§os, comunicaÃ§Ã£o orientada a eventos e infraestrutura escalÃ¡vel na AWS.
 
-O projeto foi desenvolvido como parte do Hackathon da Pós-Tech FIAP e possui como objetivo demonstrar a aplicação de práticas modernas de Arquitetura de Software, DevOps e Engenharia de Plataforma.
+O projeto foi desenvolvido como parte do Hackathon da PÃ³s-Tech FIAP e possui como objetivo demonstrar a aplicaÃ§Ã£o de prÃ¡ticas modernas de Arquitetura de Software, DevOps e Engenharia de Plataforma.
 
 ---
 
 ## Problema
 
-O sistema legado realiza o processamento de vídeos de forma síncrona e monolítica.
+O sistema legado realiza o processamento de vÃ­deos de forma sÃ­ncrona e monolÃ­tica.
 
-Principais limitações:
+Principais limitaÃ§Ãµes:
 
 - Processamento demorado
 - Baixa escalabilidade
 - Alto acoplamento
-- Evolução difícil
-- Baixa resiliência
+- EvoluÃ§Ã£o difÃ­cil
+- Baixa resiliÃªncia
 
 ---
 
-## Solução
+## SoluÃ§Ã£o
 
-A solução utiliza:
+A soluÃ§Ã£o utiliza:
 
-- Microsserviços
+- MicrosserviÃ§os
 - Event Driven Architecture
 - Kubernetes
 - Amazon S3
@@ -42,7 +42,7 @@ A solução utiliza:
 - Escalabilidade
 - Alta disponibilidade
 - Baixo acoplamento
-- Resiliência
+- ResiliÃªncia
 - Observabilidade
-- Segurança
-- Evolução independente
+- SeguranÃ§a
+- EvoluÃ§Ã£o independente

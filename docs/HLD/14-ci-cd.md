@@ -1,4 +1,4 @@
-# 14 - Continuous Integration and Continuous Delivery (CI/CD)
+# 14 - Integração Contínua e Entrega Contínua (CI/CD)
 
 ## Objetivo
 

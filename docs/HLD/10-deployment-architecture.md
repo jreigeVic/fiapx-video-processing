@@ -1,4 +1,4 @@
-# 10 - Deployment Architecture
+# 10 - Arquitetura de Implantação
 
 ## Objetivo
 
