@@ -1,5 +1,10 @@
 package com.fiapx.identity.configuration;
 
+import com.fiapx.identity.application.ports.in.AuthenticateUserPort;
+import com.fiapx.identity.application.ports.in.GetAuthenticatedUserPort;
+import com.fiapx.identity.application.ports.in.LogoutPort;
+import com.fiapx.identity.application.ports.in.RefreshTokenPort;
+import com.fiapx.identity.application.ports.in.RegisterUserPort;
 import com.fiapx.identity.application.ports.out.PasswordEncoderPort;
 import com.fiapx.identity.application.ports.out.RefreshTokenRepositoryPort;
 import com.fiapx.identity.application.ports.out.TokenProviderPort;
@@ -49,13 +54,13 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    public RegisterUserUseCase registerUserUseCase(
+    public RegisterUserPort registerUserUseCase(
             UserRepositoryPort userRepositoryPort, PasswordEncoderPort passwordEncoderPort) {
         return new RegisterUserUseCase(userRepositoryPort, passwordEncoderPort);
     }
 
     @Bean
-    public AuthenticateUserUseCase authenticateUserUseCase(
+    public AuthenticateUserPort authenticateUserUseCase(
             UserRepositoryPort userRepositoryPort,
             PasswordEncoderPort passwordEncoderPort,
             TokenProviderPort tokenProviderPort,
@@ -70,7 +75,7 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    public RefreshTokenUseCase refreshTokenUseCase(
+    public RefreshTokenPort refreshTokenUseCase(
             UserRepositoryPort userRepositoryPort,
             TokenProviderPort tokenProviderPort,
             RefreshTokenRepositoryPort refreshTokenRepositoryPort,
@@ -83,12 +88,12 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    public LogoutUseCase logoutUseCase(RefreshTokenRepositoryPort refreshTokenRepositoryPort) {
+    public LogoutPort logoutUseCase(RefreshTokenRepositoryPort refreshTokenRepositoryPort) {
         return new LogoutUseCase(refreshTokenRepositoryPort);
     }
 
     @Bean
-    public GetAuthenticatedUserUseCase getAuthenticatedUserUseCase(
+    public GetAuthenticatedUserPort getAuthenticatedUserUseCase(
             UserRepositoryPort userRepositoryPort) {
         return new GetAuthenticatedUserUseCase(userRepositoryPort);
     }

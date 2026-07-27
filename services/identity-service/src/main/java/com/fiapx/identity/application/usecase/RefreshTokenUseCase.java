@@ -2,6 +2,7 @@ package com.fiapx.identity.application.usecase;
 
 import com.fiapx.identity.application.dto.AccessToken;
 import com.fiapx.identity.application.dto.AuthResult;
+import com.fiapx.identity.application.ports.in.RefreshTokenPort;
 import com.fiapx.identity.application.ports.out.RefreshTokenRepositoryPort;
 import com.fiapx.identity.application.ports.out.TokenProviderPort;
 import com.fiapx.identity.application.ports.out.UserRepositoryPort;
@@ -12,7 +13,7 @@ import com.fiapx.identity.domain.model.User;
 import java.time.Duration;
 import java.time.Instant;
 
-public class RefreshTokenUseCase {
+public class RefreshTokenUseCase implements RefreshTokenPort {
 
     private final UserRepositoryPort userRepositoryPort;
     private final TokenProviderPort tokenProviderPort;
@@ -30,6 +31,7 @@ public class RefreshTokenUseCase {
         this.refreshTokenTimeToLive = refreshTokenTimeToLive;
     }
 
+    @Override
     public AuthResult execute(String rawRefreshToken) {
         String tokenHash = RefreshToken.hash(rawRefreshToken);
         RefreshToken existing =

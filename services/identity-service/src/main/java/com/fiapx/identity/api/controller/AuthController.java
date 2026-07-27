@@ -7,11 +7,11 @@ import com.fiapx.identity.api.request.RegisterUserRequest;
 import com.fiapx.identity.api.response.LoginResponse;
 import com.fiapx.identity.api.response.UserResponse;
 import com.fiapx.identity.application.dto.AuthResult;
-import com.fiapx.identity.application.usecase.AuthenticateUserUseCase;
-import com.fiapx.identity.application.usecase.GetAuthenticatedUserUseCase;
-import com.fiapx.identity.application.usecase.LogoutUseCase;
-import com.fiapx.identity.application.usecase.RefreshTokenUseCase;
-import com.fiapx.identity.application.usecase.RegisterUserUseCase;
+import com.fiapx.identity.application.ports.in.AuthenticateUserPort;
+import com.fiapx.identity.application.ports.in.GetAuthenticatedUserPort;
+import com.fiapx.identity.application.ports.in.LogoutPort;
+import com.fiapx.identity.application.ports.in.RefreshTokenPort;
+import com.fiapx.identity.application.ports.in.RegisterUserPort;
 import com.fiapx.identity.domain.model.User;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -28,18 +28,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final RegisterUserUseCase registerUserUseCase;
-    private final AuthenticateUserUseCase authenticateUserUseCase;
-    private final RefreshTokenUseCase refreshTokenUseCase;
-    private final LogoutUseCase logoutUseCase;
-    private final GetAuthenticatedUserUseCase getAuthenticatedUserUseCase;
+    private final RegisterUserPort registerUserUseCase;
+    private final AuthenticateUserPort authenticateUserUseCase;
+    private final RefreshTokenPort refreshTokenUseCase;
+    private final LogoutPort logoutUseCase;
+    private final GetAuthenticatedUserPort getAuthenticatedUserUseCase;
 
     public AuthController(
-            RegisterUserUseCase registerUserUseCase,
-            AuthenticateUserUseCase authenticateUserUseCase,
-            RefreshTokenUseCase refreshTokenUseCase,
-            LogoutUseCase logoutUseCase,
-            GetAuthenticatedUserUseCase getAuthenticatedUserUseCase) {
+            RegisterUserPort registerUserUseCase,
+            AuthenticateUserPort authenticateUserUseCase,
+            RefreshTokenPort refreshTokenUseCase,
+            LogoutPort logoutUseCase,
+            GetAuthenticatedUserPort getAuthenticatedUserUseCase) {
         this.registerUserUseCase = registerUserUseCase;
         this.authenticateUserUseCase = authenticateUserUseCase;
         this.refreshTokenUseCase = refreshTokenUseCase;

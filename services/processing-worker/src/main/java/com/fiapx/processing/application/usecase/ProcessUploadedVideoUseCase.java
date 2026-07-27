@@ -1,6 +1,7 @@
 package com.fiapx.processing.application.usecase;
 
 import com.fiapx.processing.application.dto.ProcessingOutput;
+import com.fiapx.processing.application.ports.in.ProcessUploadedVideoPort;
 import com.fiapx.processing.application.ports.out.EventPublisherPort;
 import com.fiapx.processing.application.ports.out.IdempotencyPort;
 import com.fiapx.processing.application.ports.out.StoragePort;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ProcessUploadedVideoUseCase {
+public class ProcessUploadedVideoUseCase implements ProcessUploadedVideoPort {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessUploadedVideoUseCase.class);
 
@@ -38,6 +39,7 @@ public class ProcessUploadedVideoUseCase {
         this.idempotencyPort = idempotencyPort;
     }
 
+    @Override
     public void execute(
             UUID eventId,
             UUID videoId,

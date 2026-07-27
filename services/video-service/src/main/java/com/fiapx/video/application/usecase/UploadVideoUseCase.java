@@ -1,6 +1,7 @@
 package com.fiapx.video.application.usecase;
 
 import com.fiapx.video.application.dto.UploadedFile;
+import com.fiapx.video.application.ports.in.UploadVideoPort;
 import com.fiapx.video.application.ports.out.EventPublisherPort;
 import com.fiapx.video.application.ports.out.StoragePort;
 import com.fiapx.video.application.ports.out.VideoRepositoryPort;
@@ -10,7 +11,7 @@ import com.fiapx.video.domain.model.Video;
 import java.util.Set;
 import java.util.UUID;
 
-public class UploadVideoUseCase {
+public class UploadVideoUseCase implements UploadVideoPort {
 
     private final VideoRepositoryPort videoRepositoryPort;
     private final StoragePort storagePort;
@@ -31,6 +32,7 @@ public class UploadVideoUseCase {
         this.allowedContentTypes = allowedContentTypes;
     }
 
+    @Override
     public Video execute(UUID ownerUserId, String ownerEmail, UploadedFile file) {
         validate(file);
 

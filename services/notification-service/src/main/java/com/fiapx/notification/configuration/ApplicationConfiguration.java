@@ -1,6 +1,8 @@
 package com.fiapx.notification.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fiapx.notification.application.ports.in.NotifyVideoFailedPort;
+import com.fiapx.notification.application.ports.in.NotifyVideoProcessedPort;
 import com.fiapx.notification.application.ports.out.NotificationIdempotencyPort;
 import com.fiapx.notification.application.ports.out.NotificationRepositoryPort;
 import com.fiapx.notification.application.ports.out.NotificationSenderPort;
@@ -44,7 +46,7 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    public NotifyVideoProcessedUseCase notifyVideoProcessedUseCase(
+    public NotifyVideoProcessedPort notifyVideoProcessedUseCase(
             NotificationSenderPort notificationSenderPort,
             NotificationRepositoryPort notificationRepositoryPort,
             NotificationIdempotencyPort notificationIdempotencyPort) {
@@ -53,7 +55,7 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    public NotifyVideoFailedUseCase notifyVideoFailedUseCase(
+    public NotifyVideoFailedPort notifyVideoFailedUseCase(
             NotificationSenderPort notificationSenderPort,
             NotificationRepositoryPort notificationRepositoryPort,
             NotificationIdempotencyPort notificationIdempotencyPort) {
@@ -70,8 +72,8 @@ public class ApplicationConfiguration {
     public ProcessingNotificationConsumer processingNotificationConsumer(
             SqsClient sqsClient,
             ObjectMapper objectMapper,
-            NotifyVideoProcessedUseCase notifyVideoProcessedUseCase,
-            NotifyVideoFailedUseCase notifyVideoFailedUseCase,
+            NotifyVideoProcessedPort notifyVideoProcessedUseCase,
+            NotifyVideoFailedPort notifyVideoFailedUseCase,
             AwsProperties awsProperties) {
         return new ProcessingNotificationConsumer(
                 sqsClient,

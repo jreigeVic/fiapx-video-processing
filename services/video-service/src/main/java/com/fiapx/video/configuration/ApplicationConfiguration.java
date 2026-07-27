@@ -1,6 +1,12 @@
 package com.fiapx.video.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fiapx.video.application.ports.in.GenerateDownloadUrlPort;
+import com.fiapx.video.application.ports.in.GetVideoPort;
+import com.fiapx.video.application.ports.in.ListUserVideosPort;
+import com.fiapx.video.application.ports.in.MarkVideoFailedPort;
+import com.fiapx.video.application.ports.in.MarkVideoProcessedPort;
+import com.fiapx.video.application.ports.in.UploadVideoPort;
 import com.fiapx.video.application.ports.out.EventPublisherPort;
 import com.fiapx.video.application.ports.out.ProcessedEventIdempotencyPort;
 import com.fiapx.video.application.ports.out.StoragePort;
@@ -69,7 +75,7 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    public UploadVideoUseCase uploadVideoUseCase(
+    public UploadVideoPort uploadVideoUseCase(
             VideoRepositoryPort videoRepositoryPort,
             StoragePort storagePort,
             EventPublisherPort eventPublisherPort,
@@ -83,17 +89,17 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    public GetVideoUseCase getVideoUseCase(VideoRepositoryPort videoRepositoryPort) {
+    public GetVideoPort getVideoUseCase(VideoRepositoryPort videoRepositoryPort) {
         return new GetVideoUseCase(videoRepositoryPort);
     }
 
     @Bean
-    public ListUserVideosUseCase listUserVideosUseCase(VideoRepositoryPort videoRepositoryPort) {
+    public ListUserVideosPort listUserVideosUseCase(VideoRepositoryPort videoRepositoryPort) {
         return new ListUserVideosUseCase(videoRepositoryPort);
     }
 
     @Bean
-    public GenerateDownloadUrlUseCase generateDownloadUrlUseCase(
+    public GenerateDownloadUrlPort generateDownloadUrlUseCase(
             VideoRepositoryPort videoRepositoryPort,
             StoragePort storagePort,
             AwsProperties awsProperties) {
@@ -104,14 +110,14 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    public MarkVideoProcessedUseCase markVideoProcessedUseCase(
+    public MarkVideoProcessedPort markVideoProcessedUseCase(
             VideoRepositoryPort videoRepositoryPort,
             ProcessedEventIdempotencyPort processedEventIdempotencyPort) {
         return new MarkVideoProcessedUseCase(videoRepositoryPort, processedEventIdempotencyPort);
     }
 
     @Bean
-    public MarkVideoFailedUseCase markVideoFailedUseCase(
+    public MarkVideoFailedPort markVideoFailedUseCase(
             VideoRepositoryPort videoRepositoryPort,
             ProcessedEventIdempotencyPort processedEventIdempotencyPort) {
         return new MarkVideoFailedUseCase(videoRepositoryPort, processedEventIdempotencyPort);
@@ -136,8 +142,8 @@ public class ApplicationConfiguration {
     public ProcessingResultConsumer processingResultConsumer(
             SqsClient sqsClient,
             ObjectMapper objectMapper,
-            MarkVideoProcessedUseCase markVideoProcessedUseCase,
-            MarkVideoFailedUseCase markVideoFailedUseCase,
+            MarkVideoProcessedPort markVideoProcessedUseCase,
+            MarkVideoFailedPort markVideoFailedUseCase,
             AwsProperties awsProperties) {
         return new ProcessingResultConsumer(
                 sqsClient,
