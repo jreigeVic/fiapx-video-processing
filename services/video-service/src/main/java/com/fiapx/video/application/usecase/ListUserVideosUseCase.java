@@ -1,12 +1,13 @@
 package com.fiapx.video.application.usecase;
 
+import com.fiapx.video.application.ports.in.ListUserVideosPort;
 import com.fiapx.video.application.ports.out.VideoRepositoryPort;
 import com.fiapx.video.domain.model.Video;
 import com.fiapx.video.domain.model.VideoStatus;
 import java.util.List;
 import java.util.UUID;
 
-public class ListUserVideosUseCase {
+public class ListUserVideosUseCase implements ListUserVideosPort {
 
     private final VideoRepositoryPort videoRepositoryPort;
 
@@ -14,6 +15,7 @@ public class ListUserVideosUseCase {
         this.videoRepositoryPort = videoRepositoryPort;
     }
 
+    @Override
     public List<Video> execute(UUID ownerUserId, VideoStatus statusFilter) {
         List<Video> videos = videoRepositoryPort.findByOwnerUserId(ownerUserId);
         if (statusFilter == null) {

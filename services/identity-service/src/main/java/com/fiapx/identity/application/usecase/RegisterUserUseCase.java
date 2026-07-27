@@ -1,5 +1,6 @@
 package com.fiapx.identity.application.usecase;
 
+import com.fiapx.identity.application.ports.in.RegisterUserPort;
 import com.fiapx.identity.application.ports.out.PasswordEncoderPort;
 import com.fiapx.identity.application.ports.out.UserRepositoryPort;
 import com.fiapx.identity.domain.exception.EmailAlreadyRegisteredException;
@@ -7,7 +8,7 @@ import com.fiapx.identity.domain.model.Email;
 import com.fiapx.identity.domain.model.PasswordHash;
 import com.fiapx.identity.domain.model.User;
 
-public class RegisterUserUseCase {
+public class RegisterUserUseCase implements RegisterUserPort {
 
     private final UserRepositoryPort userRepositoryPort;
     private final PasswordEncoderPort passwordEncoderPort;
@@ -18,6 +19,7 @@ public class RegisterUserUseCase {
         this.passwordEncoderPort = passwordEncoderPort;
     }
 
+    @Override
     public User execute(String name, String rawEmail, String rawPassword) {
         Email email = Email.of(rawEmail);
         if (userRepositoryPort.existsByEmail(email)) {

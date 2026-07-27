@@ -1,8 +1,8 @@
 package com.fiapx.video.infrastructure.messaging;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fiapx.video.application.usecase.MarkVideoFailedUseCase;
-import com.fiapx.video.application.usecase.MarkVideoProcessedUseCase;
+import com.fiapx.video.application.ports.in.MarkVideoFailedPort;
+import com.fiapx.video.application.ports.in.MarkVideoProcessedPort;
 import com.fiapx.video.domain.model.StorageObjectKey;
 import java.util.List;
 import org.slf4j.Logger;
@@ -22,15 +22,15 @@ public class ProcessingResultConsumer {
 
     private final SqsClient sqsClient;
     private final ObjectMapper objectMapper;
-    private final MarkVideoProcessedUseCase markVideoProcessedUseCase;
-    private final MarkVideoFailedUseCase markVideoFailedUseCase;
+    private final MarkVideoProcessedPort markVideoProcessedUseCase;
+    private final MarkVideoFailedPort markVideoFailedUseCase;
     private final String queueName;
 
     public ProcessingResultConsumer(
             SqsClient sqsClient,
             ObjectMapper objectMapper,
-            MarkVideoProcessedUseCase markVideoProcessedUseCase,
-            MarkVideoFailedUseCase markVideoFailedUseCase,
+            MarkVideoProcessedPort markVideoProcessedUseCase,
+            MarkVideoFailedPort markVideoFailedUseCase,
             String queueName) {
         this.sqsClient = sqsClient;
         this.objectMapper = objectMapper;

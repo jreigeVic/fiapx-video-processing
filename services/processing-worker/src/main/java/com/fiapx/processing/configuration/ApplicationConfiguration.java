@@ -1,6 +1,7 @@
 package com.fiapx.processing.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fiapx.processing.application.ports.in.ProcessUploadedVideoPort;
 import com.fiapx.processing.application.ports.out.EventPublisherPort;
 import com.fiapx.processing.application.ports.out.IdempotencyPort;
 import com.fiapx.processing.application.ports.out.StoragePort;
@@ -54,7 +55,7 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    public ProcessUploadedVideoUseCase processUploadedVideoUseCase(
+    public ProcessUploadedVideoPort processUploadedVideoUseCase(
             StoragePort storagePort,
             VideoProcessorPort videoProcessorPort,
             EventPublisherPort eventPublisherPort,
@@ -72,7 +73,7 @@ public class ApplicationConfiguration {
     public VideoUploadedConsumer videoUploadedConsumer(
             SqsClient sqsClient,
             ObjectMapper objectMapper,
-            ProcessUploadedVideoUseCase processUploadedVideoUseCase,
+            ProcessUploadedVideoPort processUploadedVideoUseCase,
             AwsProperties awsProperties) {
         return new VideoUploadedConsumer(
                 sqsClient,

@@ -1,7 +1,7 @@
 package com.fiapx.processing.infrastructure.adapter.in.messaging;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fiapx.processing.application.usecase.ProcessUploadedVideoUseCase;
+import com.fiapx.processing.application.ports.in.ProcessUploadedVideoPort;
 import com.fiapx.processing.domain.model.StorageObjectKey;
 import java.util.List;
 import org.slf4j.Logger;
@@ -21,13 +21,13 @@ public class VideoUploadedConsumer {
 
     private final SqsClient sqsClient;
     private final ObjectMapper objectMapper;
-    private final ProcessUploadedVideoUseCase processUploadedVideoUseCase;
+    private final ProcessUploadedVideoPort processUploadedVideoUseCase;
     private final String queueName;
 
     public VideoUploadedConsumer(
             SqsClient sqsClient,
             ObjectMapper objectMapper,
-            ProcessUploadedVideoUseCase processUploadedVideoUseCase,
+            ProcessUploadedVideoPort processUploadedVideoUseCase,
             String queueName) {
         this.sqsClient = sqsClient;
         this.objectMapper = objectMapper;

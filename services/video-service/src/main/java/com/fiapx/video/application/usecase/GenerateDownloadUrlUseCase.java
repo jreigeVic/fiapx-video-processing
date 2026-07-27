@@ -1,6 +1,7 @@
 package com.fiapx.video.application.usecase;
 
 import com.fiapx.video.application.dto.DownloadUrl;
+import com.fiapx.video.application.ports.in.GenerateDownloadUrlPort;
 import com.fiapx.video.application.ports.out.StoragePort;
 import com.fiapx.video.application.ports.out.VideoRepositoryPort;
 import com.fiapx.video.domain.exception.VideoNotFoundException;
@@ -10,7 +11,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
-public class GenerateDownloadUrlUseCase {
+public class GenerateDownloadUrlUseCase implements GenerateDownloadUrlPort {
 
     private final VideoRepositoryPort videoRepositoryPort;
     private final StoragePort storagePort;
@@ -25,6 +26,7 @@ public class GenerateDownloadUrlUseCase {
         this.urlTimeToLive = urlTimeToLive;
     }
 
+    @Override
     public DownloadUrl execute(UUID ownerUserId, UUID videoId) {
         Video video =
                 videoRepositoryPort

@@ -1,5 +1,6 @@
 package com.fiapx.notification.application.usecase;
 
+import com.fiapx.notification.application.ports.in.NotifyVideoFailedPort;
 import com.fiapx.notification.application.ports.out.NotificationIdempotencyPort;
 import com.fiapx.notification.application.ports.out.NotificationRepositoryPort;
 import com.fiapx.notification.application.ports.out.NotificationSenderPort;
@@ -17,7 +18,7 @@ import org.slf4j.LoggerFactory;
  * other exception is left to propagate so the SQS consumer does not ack the message, letting SQS
  * redrive/DLQ handle the retry.
  */
-public class NotifyVideoFailedUseCase {
+public class NotifyVideoFailedUseCase implements NotifyVideoFailedPort {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NotifyVideoFailedUseCase.class);
 
@@ -34,6 +35,7 @@ public class NotifyVideoFailedUseCase {
         this.notificationIdempotencyPort = notificationIdempotencyPort;
     }
 
+    @Override
     public void execute(
             UUID eventId, UUID videoId, UUID ownerUserId, String ownerEmail, String failureReason) {
         if (notificationIdempotencyPort.existsByEventId(eventId)) {

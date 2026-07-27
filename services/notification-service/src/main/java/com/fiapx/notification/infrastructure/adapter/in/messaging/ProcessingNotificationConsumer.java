@@ -1,8 +1,8 @@
 package com.fiapx.notification.infrastructure.adapter.in.messaging;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fiapx.notification.application.usecase.NotifyVideoFailedUseCase;
-import com.fiapx.notification.application.usecase.NotifyVideoProcessedUseCase;
+import com.fiapx.notification.application.ports.in.NotifyVideoFailedPort;
+import com.fiapx.notification.application.ports.in.NotifyVideoProcessedPort;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,15 +22,15 @@ public class ProcessingNotificationConsumer {
 
     private final SqsClient sqsClient;
     private final ObjectMapper objectMapper;
-    private final NotifyVideoProcessedUseCase notifyVideoProcessedUseCase;
-    private final NotifyVideoFailedUseCase notifyVideoFailedUseCase;
+    private final NotifyVideoProcessedPort notifyVideoProcessedUseCase;
+    private final NotifyVideoFailedPort notifyVideoFailedUseCase;
     private final String queueName;
 
     public ProcessingNotificationConsumer(
             SqsClient sqsClient,
             ObjectMapper objectMapper,
-            NotifyVideoProcessedUseCase notifyVideoProcessedUseCase,
-            NotifyVideoFailedUseCase notifyVideoFailedUseCase,
+            NotifyVideoProcessedPort notifyVideoProcessedUseCase,
+            NotifyVideoFailedPort notifyVideoFailedUseCase,
             String queueName) {
         this.sqsClient = sqsClient;
         this.objectMapper = objectMapper;

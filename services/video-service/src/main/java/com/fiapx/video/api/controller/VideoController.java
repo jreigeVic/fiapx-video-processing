@@ -7,10 +7,10 @@ import com.fiapx.video.api.response.VideoUploadResponse;
 import com.fiapx.video.application.dto.AuthenticatedUser;
 import com.fiapx.video.application.dto.DownloadUrl;
 import com.fiapx.video.application.dto.UploadedFile;
-import com.fiapx.video.application.usecase.GenerateDownloadUrlUseCase;
-import com.fiapx.video.application.usecase.GetVideoUseCase;
-import com.fiapx.video.application.usecase.ListUserVideosUseCase;
-import com.fiapx.video.application.usecase.UploadVideoUseCase;
+import com.fiapx.video.application.ports.in.GenerateDownloadUrlPort;
+import com.fiapx.video.application.ports.in.GetVideoPort;
+import com.fiapx.video.application.ports.in.ListUserVideosPort;
+import com.fiapx.video.application.ports.in.UploadVideoPort;
 import com.fiapx.video.domain.exception.InvalidUploadException;
 import com.fiapx.video.domain.model.Video;
 import com.fiapx.video.domain.model.VideoStatus;
@@ -33,16 +33,16 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/videos")
 public class VideoController {
 
-    private final UploadVideoUseCase uploadVideoUseCase;
-    private final ListUserVideosUseCase listUserVideosUseCase;
-    private final GetVideoUseCase getVideoUseCase;
-    private final GenerateDownloadUrlUseCase generateDownloadUrlUseCase;
+    private final UploadVideoPort uploadVideoUseCase;
+    private final ListUserVideosPort listUserVideosUseCase;
+    private final GetVideoPort getVideoUseCase;
+    private final GenerateDownloadUrlPort generateDownloadUrlUseCase;
 
     public VideoController(
-            UploadVideoUseCase uploadVideoUseCase,
-            ListUserVideosUseCase listUserVideosUseCase,
-            GetVideoUseCase getVideoUseCase,
-            GenerateDownloadUrlUseCase generateDownloadUrlUseCase) {
+            UploadVideoPort uploadVideoUseCase,
+            ListUserVideosPort listUserVideosUseCase,
+            GetVideoPort getVideoUseCase,
+            GenerateDownloadUrlPort generateDownloadUrlUseCase) {
         this.uploadVideoUseCase = uploadVideoUseCase;
         this.listUserVideosUseCase = listUserVideosUseCase;
         this.getVideoUseCase = getVideoUseCase;

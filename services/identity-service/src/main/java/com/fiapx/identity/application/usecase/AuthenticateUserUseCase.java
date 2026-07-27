@@ -2,6 +2,7 @@ package com.fiapx.identity.application.usecase;
 
 import com.fiapx.identity.application.dto.AccessToken;
 import com.fiapx.identity.application.dto.AuthResult;
+import com.fiapx.identity.application.ports.in.AuthenticateUserPort;
 import com.fiapx.identity.application.ports.out.PasswordEncoderPort;
 import com.fiapx.identity.application.ports.out.RefreshTokenRepositoryPort;
 import com.fiapx.identity.application.ports.out.TokenProviderPort;
@@ -13,7 +14,7 @@ import com.fiapx.identity.domain.model.RefreshToken;
 import com.fiapx.identity.domain.model.User;
 import java.time.Duration;
 
-public class AuthenticateUserUseCase {
+public class AuthenticateUserUseCase implements AuthenticateUserPort {
 
     private final UserRepositoryPort userRepositoryPort;
     private final PasswordEncoderPort passwordEncoderPort;
@@ -34,6 +35,7 @@ public class AuthenticateUserUseCase {
         this.refreshTokenTimeToLive = refreshTokenTimeToLive;
     }
 
+    @Override
     public AuthResult execute(String rawEmail, String rawPassword) {
         Email email = Email.of(rawEmail);
         User user =
