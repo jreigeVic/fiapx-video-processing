@@ -3,164 +3,397 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FIAP X - Video Processing (Demo)</title>
+<title>FIAP X · Video Processing</title>
 <style>
+    :root {
+        --ink: #12141a;
+        --paper: #f4f5f7;
+        --card: #ffffff;
+        --line: #e3e5ea;
+        --text: #1c1f26;
+        --text-dim: #6b7280;
+        --accent: #4f46e5;
+        --accent-dark: #4338ca;
+        --accent-soft: #eef2ff;
+        --ok: #0f9d58;
+        --ok-soft: #e6f7ee;
+        --warn: #b7791f;
+        --warn-soft: #fff6e0;
+        --bad: #d64545;
+        --bad-soft: #fdeaea;
+        --radius: 12px;
+        --shadow: 0 1px 2px rgba(16, 20, 30, 0.04), 0 8px 24px rgba(16, 20, 30, 0.06);
+    }
+
+    * { box-sizing: border-box; }
+
     body {
-        font-family: Arial, sans-serif;
-        max-width: 800px;
-        margin: 40px auto;
-        padding: 20px;
-        background-color: #f5f5f5;
+        margin: 0;
+        font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: var(--paper);
+        color: var(--text);
+        line-height: 1.5;
     }
+
+    header.hero {
+        background: var(--ink);
+        color: #f4f5f7;
+        padding: 2.4rem 1.5rem 3.2rem;
+        text-align: center;
+    }
+    header.hero .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.78rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #a5b4fc;
+        margin-bottom: 0.8rem;
+    }
+    header.hero .brand::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #a5b4fc;
+    }
+    header.hero h1 {
+        margin: 0 0 0.5rem;
+        font-size: clamp(1.5rem, 4vw, 2rem);
+        font-weight: 700;
+    }
+    header.hero p {
+        margin: 0;
+        color: #9aa1b2;
+        font-size: 0.95rem;
+    }
+
+    main {
+        max-width: 640px;
+        margin: -1.8rem auto 3rem;
+        padding: 0 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.1rem;
+    }
+
     .card {
-        background: white;
-        padding: 30px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 1.5rem;
     }
-    h1 { color: #333; text-align: center; margin-bottom: 10px; }
-    h2 { color: #333; margin-top: 0; }
-    .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
-    label { display: block; margin: 10px 0 4px; font-size: 14px; color: #444; }
+
+    .step-title {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 0 0 1.1rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+    .step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 0.85rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .step-title.done .step-num { background: var(--ok-soft); color: var(--ok); }
+
+    label {
+        display: block;
+        margin: 0.7rem 0 0.3rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text-dim);
+    }
+    label:first-of-type { margin-top: 0; }
+
     input[type="text"], input[type="email"], input[type="password"] {
         width: 100%;
-        padding: 8px;
-        box-sizing: border-box;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+        padding: 0.6rem 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: var(--paper);
+        color: var(--text);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
-    .upload-form {
-        border: 2px dashed #ddd;
-        padding: 20px;
-        text-align: center;
-        border-radius: 10px;
-        margin: 20px 0;
+    input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+        background: var(--card);
     }
+
     button {
-        background: #007bff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: var(--accent);
         color: white;
-        padding: 10px 24px;
+        padding: 0.65rem 1.4rem;
         border: none;
-        border-radius: 5px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 15px;
-        margin-top: 12px;
+        font-size: 0.92rem;
+        font-weight: 600;
+        margin-top: 1rem;
+        transition: background 0.15s ease, transform 0.05s ease;
     }
-    button:hover { background: #0056b3; }
-    button:disabled { background: #aaa; cursor: not-allowed; }
-    .message {
-        margin-top: 15px;
-        padding: 12px;
-        border-radius: 5px;
+    button:hover:not(:disabled) { background: var(--accent-dark); }
+    button:active:not(:disabled) { transform: scale(0.98); }
+    button:disabled { background: #c7cad1; cursor: not-allowed; }
+    button.ghost {
+        background: transparent;
+        color: var(--text-dim);
+        border: 1px solid var(--line);
+    }
+    button.ghost:hover:not(:disabled) { background: var(--paper); color: var(--text); }
+    button.small { padding: 0.4rem 0.9rem; font-size: 0.82rem; margin-top: 0; }
+
+    .spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
         display: none;
     }
-    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    .videos-list { margin-top: 20px; }
-    .video-item {
-        background: #f8f9fa;
-        padding: 10px 14px;
-        margin: 6px 0;
-        border-radius: 5px;
+    button[data-loading="true"] .spinner { display: inline-block; }
+    button[data-loading="true"] .btn-label::after { content: "…"; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+        .spinner { animation: none; }
+        .status-PROCESSING .dot { animation: none; }
+    }
+
+    .upload-zone {
+        border: 2px dashed var(--line);
+        border-radius: var(--radius);
+        padding: 2rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+    }
+    .upload-zone input[type="file"] { display: none; }
+    .upload-zone .icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
+    .upload-zone .hint { color: var(--text-dim); font-size: 0.85rem; margin-top: 0.3rem; }
+    .upload-zone .filename { font-weight: 600; color: var(--accent); word-break: break-all; }
+
+    .message {
+        margin-top: 0.9rem;
+        padding: 0.7rem 0.9rem;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        display: none;
+    }
+    .message.show { display: block; }
+    .message.success { background: var(--ok-soft); color: #0a6b3c; }
+    .message.error { background: var(--bad-soft); color: #a12f2f; }
+
+    .videos-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.8rem;
     }
-    .status-badge {
-        padding: 3px 10px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: bold;
+    .videos-empty {
+        text-align: center;
+        color: var(--text-dim);
+        font-size: 0.9rem;
+        padding: 1.5rem 0;
     }
-    .status-PROCESSED { background: #d4edda; color: #155724; }
-    .status-PROCESSING, .status-RECEIVED { background: #fff3cd; color: #856404; }
-    .status-FAILED { background: #f8d7da; color: #721c24; }
-    .download-btn {
-        background: #28a745;
+    .video-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0.7rem 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    .video-item:last-child { margin-bottom: 0; }
+    .video-name {
+        font-size: 0.88rem;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .video-meta { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 99px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+    .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .status-PROCESSED { background: var(--ok-soft); color: #0a6b3c; }
+    .status-PROCESSING, .status-RECEIVED { background: var(--warn-soft); color: #8a5a12; }
+    .status-PROCESSING .dot { animation: pulse 1.2s ease-in-out infinite; }
+    .status-FAILED { background: var(--bad-soft); color: #a12f2f; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+    a.download-btn {
+        background: var(--ok);
         color: white;
-        padding: 5px 14px;
+        padding: 0.35rem 0.8rem;
         text-decoration: none;
-        border-radius: 3px;
-        font-size: 13px;
-        margin-top: 0;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        white-space: nowrap;
     }
-    .download-btn:hover { background: #218838; }
-    .config-toggle { text-align: center; margin-bottom: 10px; }
-    .config-toggle a { color: #888; font-size: 13px; cursor: pointer; }
-    #configPanel { display: none; }
-    small.hint { color: #888; }
+    a.download-btn:hover { background: #0c7f47; }
+
+    details.config {
+        margin: 0 auto 1rem;
+        max-width: 640px;
+    }
+    details.config summary {
+        list-style: none;
+        cursor: pointer;
+        text-align: center;
+        color: #9aa1b2;
+        font-size: 0.82rem;
+        padding: 0 1.25rem;
+    }
+    details.config summary::-webkit-details-marker { display: none; }
+    details.config summary::before { content: "⚙ "; }
+    details.config .card { margin: 0.6rem 1.25rem 0; }
+    small.hint { color: var(--text-dim); display: block; margin-top: 0.6rem; font-size: 0.78rem; }
+
+    footer {
+        text-align: center;
+        color: var(--text-dim);
+        font-size: 0.78rem;
+        padding: 0 1.25rem 2rem;
+    }
 </style>
 </head>
 <body>
-    <h1>FIAP X - Video Processing</h1>
-    <p class="subtitle">Demo: login, upload, acompanhamento de status e download do ZIP de frames.</p>
+    <header class="hero">
+        <div class="brand">Hackathon FIAP X</div>
+        <h1>Video Processing Platform</h1>
+        <p>Login → upload → acompanhamento de status → download do ZIP de frames</p>
+    </header>
 
-    <div class="config-toggle"><a id="toggleConfig">Configurar endpoints da API</a></div>
-    <div class="card" id="configPanel">
-        <h2>Endpoints</h2>
-        <label for="identityUrl">Identity Service URL</label>
-        <input type="text" id="identityUrl" value="http://localhost:8081">
-        <label for="videoUrl">Video Service URL</label>
-        <input type="text" id="videoUrl" value="http://localhost:8082">
-        <small class="hint">Aponte para o LoadBalancer real (kubectl get svc) ao demonstrar contra o cluster AWS.</small>
-    </div>
+    <details class="config" id="configDetails">
+        <summary>Configurar endpoints da API</summary>
+        <div class="card">
+            <label for="identityUrl">Identity Service URL</label>
+            <input type="text" id="identityUrl" value="http://localhost:8081">
+            <label for="videoUrl">Video Service URL</label>
+            <input type="text" id="videoUrl" value="http://localhost:8082">
+            <small class="hint">Padrão aponta para o docker-compose local. Para demonstrar contra o cluster AWS, troque pelos hostnames reais do LoadBalancer (<code>kubectl get svc identity-service video-service -n fiapx</code>).</small>
+        </div>
+    </details>
 
-    <div class="card" id="loginCard">
-        <h2>1. Login</h2>
-        <form id="loginForm">
-            <label for="email">Email</label>
-            <input type="email" id="email" required>
-            <label for="password">Senha</label>
-            <input type="password" id="password" required>
-            <button type="submit">Entrar</button>
-        </form>
-        <div class="message" id="loginMessage"></div>
-    </div>
+    <main>
+        <section class="card" id="loginCard">
+            <h2 class="step-title" id="loginStepTitle"><span class="step-num">1</span> Login</h2>
+            <form id="loginForm">
+                <label for="email">Email</label>
+                <input type="email" id="email" required autocomplete="username">
+                <label for="password">Senha</label>
+                <input type="password" id="password" required autocomplete="current-password">
+                <button type="submit" id="loginBtn">
+                    <span class="spinner"></span><span class="btn-label">Entrar</span>
+                </button>
+            </form>
+            <div class="message" id="loginMessage"></div>
+        </section>
 
-    <div class="card" id="appCard" style="display:none">
-        <h2>2. Upload de vídeo</h2>
-        <form id="uploadForm" class="upload-form">
-            <input type="file" id="videoFile" accept="video/*" required>
-            <br>
-            <button type="submit">Enviar vídeo</button>
-        </form>
-        <div class="message" id="uploadMessage"></div>
+        <section class="card" id="appCard" style="display:none">
+            <div class="videos-header">
+                <h2 class="step-title" style="margin:0"><span class="step-num">2</span> Upload de vídeo</h2>
+                <button type="button" class="ghost small" id="logoutBtn">Sair</button>
+            </div>
 
-        <h2>3. Status e download</h2>
-        <button id="refreshBtn" type="button">Atualizar lista</button>
-        <div class="videos-list" id="videosList">Faça login para ver seus vídeos.</div>
-    </div>
+            <form id="uploadForm">
+                <label class="upload-zone" id="uploadZone" for="videoFile">
+                    <div class="icon">🎬</div>
+                    <div id="uploadZoneText">Clique ou arraste um vídeo aqui</div>
+                    <div class="hint">MP4, MOV, AVI ou MKV · até 100MB</div>
+                    <input type="file" id="videoFile" accept="video/*" required>
+                </label>
+                <button type="submit" id="uploadBtn">
+                    <span class="spinner"></span><span class="btn-label">Enviar vídeo</span>
+                </button>
+            </form>
+            <div class="message" id="uploadMessage"></div>
+
+            <h2 class="step-title" style="margin-top:1.8rem"><span class="step-num">3</span> Status e download</h2>
+            <div class="videos-header">
+                <small class="hint" style="margin:0">Atualiza automaticamente a cada 5s</small>
+                <button type="button" class="ghost small" id="refreshBtn">Atualizar agora</button>
+            </div>
+            <div class="videos-list" id="videosList">
+                <p class="videos-empty">Nenhum vídeo enviado ainda.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>FIAP X · Cloud Native Video Processing Platform</footer>
 
     <script>
         let accessToken = null;
         let pollTimer = null;
 
-        const identityUrl = () => document.getElementById('identityUrl').value.replace(/\/$/, '');
-        const videoUrl = () => document.getElementById('videoUrl').value.replace(/\/$/, '');
+        const $ = (id) => document.getElementById(id);
+        const identityUrl = () => $('identityUrl').value.replace(/\/$/, '');
+        const videoUrl = () => $('videoUrl').value.replace(/\/$/, '');
 
-        document.getElementById('toggleConfig').addEventListener('click', () => {
-            const panel = document.getElementById('configPanel');
-            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-        });
-
-        function showMessage(elementId, text, type) {
-            const el = document.getElementById(elementId);
-            el.textContent = text;
-            el.className = 'message ' + type;
-            el.style.display = 'block';
+        function setLoading(btn, loading) {
+            btn.dataset.loading = loading ? 'true' : 'false';
+            btn.disabled = loading;
         }
 
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+        function showMessage(elementId, text, type) {
+            const el = $(elementId);
+            el.textContent = text;
+            el.className = 'message show ' + type;
+        }
 
+        function hideMessage(elementId) {
+            $(elementId).className = 'message';
+        }
+
+        // --- Login ---
+        $('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = $('loginBtn');
+            hideMessage('loginMessage');
+            setLoading(btn, true);
             try {
                 const res = await fetch(`${identityUrl()}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password }),
+                    body: JSON.stringify({ email: $('email').value, password: $('password').value }),
                 });
                 const data = await res.json();
                 if (!res.ok) {
@@ -168,19 +401,61 @@
                     return;
                 }
                 accessToken = data.accessToken;
-                document.getElementById('loginCard').style.display = 'none';
-                document.getElementById('appCard').style.display = 'block';
+                $('loginStepTitle').classList.add('done');
+                $('loginCard').style.display = 'none';
+                $('appCard').style.display = 'block';
+                $('configDetails').open = false;
                 loadVideos();
                 pollTimer = setInterval(loadVideos, 5000);
             } catch (err) {
                 showMessage('loginMessage', 'Erro de conexão: ' + err.message, 'error');
+            } finally {
+                setLoading(btn, false);
             }
         });
 
-        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+        // --- Logout ---
+        $('logoutBtn').addEventListener('click', () => {
+            accessToken = null;
+            if (pollTimer) clearInterval(pollTimer);
+            $('appCard').style.display = 'none';
+            $('loginCard').style.display = 'block';
+            $('loginStepTitle').classList.remove('done');
+            $('loginForm').reset();
+            hideMessage('loginMessage');
+            $('videosList').innerHTML = '<p class="videos-empty">Nenhum vídeo enviado ainda.</p>';
+        });
+
+        // --- Upload (click + drag&drop) ---
+        const uploadZone = $('uploadZone');
+        const fileInput = $('videoFile');
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files[0]) {
+                $('uploadZoneText').innerHTML = `<span class="filename">${fileInput.files[0].name}</span>`;
+            }
+        });
+
+        ['dragover', 'dragenter'].forEach((evt) =>
+            uploadZone.addEventListener(evt, (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); })
+        );
+        ['dragleave', 'drop'].forEach((evt) =>
+            uploadZone.addEventListener(evt, (e) => { e.preventDefault(); uploadZone.classList.remove('dragover'); })
+        );
+        uploadZone.addEventListener('drop', (e) => {
+            if (e.dataTransfer.files[0]) {
+                fileInput.files = e.dataTransfer.files;
+                $('uploadZoneText').innerHTML = `<span class="filename">${e.dataTransfer.files[0].name}</span>`;
+            }
+        });
+
+        $('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const file = document.getElementById('videoFile').files[0];
+            const file = fileInput.files[0];
             if (!file) return;
+            const btn = $('uploadBtn');
+            hideMessage('uploadMessage');
+            setLoading(btn, true);
 
             const formData = new FormData();
             formData.append('file', file);
@@ -197,14 +472,18 @@
                     return;
                 }
                 showMessage('uploadMessage', 'Vídeo enviado! Acompanhe o status abaixo.', 'success');
-                document.getElementById('uploadForm').reset();
+                $('uploadForm').reset();
+                $('uploadZoneText').textContent = 'Clique ou arraste um vídeo aqui';
                 loadVideos();
             } catch (err) {
                 showMessage('uploadMessage', 'Erro de conexão: ' + err.message, 'error');
+            } finally {
+                setLoading(btn, false);
             }
         });
 
-        document.getElementById('refreshBtn').addEventListener('click', loadVideos);
+        // --- Status list ---
+        $('refreshBtn').addEventListener('click', loadVideos);
 
         async function loadVideos() {
             if (!accessToken) return;
@@ -213,23 +492,27 @@
                     headers: { Authorization: `Bearer ${accessToken}` },
                 });
                 if (!res.ok) return;
-                const videos = await res.json();
-                renderVideos(videos);
+                renderVideos(await res.json());
             } catch (err) {
                 // Keep silent on background poll failures; refreshBtn/upload already surface errors.
             }
         }
 
+        const STATUS_ICON = { PROCESSED: '✅', PROCESSING: '⏳', RECEIVED: '⏳', FAILED: '❌' };
+
         function renderVideos(videos) {
-            const container = document.getElementById('videosList');
+            const container = $('videosList');
             if (!videos || videos.length === 0) {
-                container.innerHTML = '<p>Nenhum vídeo enviado ainda.</p>';
+                container.innerHTML = '<p class="videos-empty">Nenhum vídeo enviado ainda.</p>';
                 return;
             }
             container.innerHTML = videos.map((v) => `
                 <div class="video-item">
-                    <span>${v.originalFileName} <span class="status-badge status-${v.status}">${v.status}</span></span>
-                    ${v.downloadAvailable ? `<a href="#" class="download-btn" onclick="downloadVideo('${v.id}'); return false;">Download</a>` : ''}
+                    <span class="video-name" title="${v.originalFileName}">${v.originalFileName}</span>
+                    <span class="video-meta">
+                        <span class="status-pill status-${v.status}"><span class="dot"></span>${v.status}</span>
+                        ${v.downloadAvailable ? `<a href="#" class="download-btn" onclick="downloadVideo('${v.id}'); return false;">${STATUS_ICON[v.status] || ''} Download</a>` : ''}
+                    </span>
                 </div>
             `).join('');
         }
