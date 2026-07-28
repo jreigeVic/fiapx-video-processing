@@ -66,7 +66,7 @@ Isso sobe **PostgreSQL** e **LocalStack** (S3/SNS/SQS emulados). Depois, rode ca
 | 🧑‍💻 Fluxo de desenvolvimento, Definition of Done | [`docs/development/`](docs/development/workflow.md) |
 | ✅ Rastreabilidade RF/RNF × evidências | [`docs/rf-rnf-traceability.md`](docs/rf-rnf-traceability.md) |
 | 🕑 Histórico de decisões do projeto | [`docs/decision-log.md`](docs/decision-log.md) |
-| 🛟 Problemas comuns e como resolver | [`docs/troubleshooting.md`](docs/troubleshooting.md) |
+| 🛟 Problemas comuns e como resolver | [`docs/development/troubleshooting.md`](docs/development/troubleshooting.md) |
 | 🧪 Testes de carga (k6) | [`tests/load/`](tests/load/README.md) |
 | ☸️ Helm charts | [`infrastructure/helm/`](infrastructure/helm/README.md) |
 | ☁️ Terraform (AWS) | [`infrastructure/`](infrastructure/README.md) |

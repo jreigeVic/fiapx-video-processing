@@ -6,7 +6,6 @@ Infraestrutura como código da plataforma FIAP X no AWS Academy (Learner Lab), a
 |---|---|
 | `terraform/` | Provisionamento AWS: ECR, RDS, S3, SNS/SQS (+DLQs), SES, EKS |
 | `helm/` | Charts de deploy no Kubernetes (Helm) - veja [`helm/README.md`](helm/README.md) |
-| `kubernetes/` | Manifestos e scripts de bootstrap do cluster |
 | `localstack/` | Script de inicialização do LocalStack usado pelo docker-compose e pelo CI |
 | `docker/` | Suporte a containers para desenvolvimento local (init do Postgres) |
 
