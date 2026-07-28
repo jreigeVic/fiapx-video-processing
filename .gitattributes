@@ -1,0 +1,5 @@
+# Shell scripts are bind-mounted straight into Linux containers
+# (docker-compose.yml, LocalStack init) - CRLF line endings break their
+# shebang/`set -e` parsing there. Force LF regardless of the checkout
+# platform's core.autocrlf setting.
+*.sh text eol=lf

@@ -53,3 +53,6 @@ SESSION-STATE.md
 
 # GitHub configuration (workflows, PR template, CODEOWNERS)
 !.github/
+
+# Line-ending normalization (*.sh must stay LF - see .gitattributes)
+!.gitattributes
