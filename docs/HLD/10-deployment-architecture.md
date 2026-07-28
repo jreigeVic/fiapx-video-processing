@@ -163,3 +163,9 @@ Essa abordagem garante:
 A arquitetura de implantação foi concebida para suportar crescimento contínuo da plataforma, permitindo evolução incremental dos microsserviços sem comprometer disponibilidade, escalabilidade ou segurança.
 
 Os detalhes de provisionamento dos recursos serão apresentados posteriormente na documentação de infraestrutura e nos artefatos de Terraform e Kubernetes.
+
+---
+
+# Diagramas Relacionados
+
+- [Deployment detalhado](../diagrams/deployment-detailed.md)

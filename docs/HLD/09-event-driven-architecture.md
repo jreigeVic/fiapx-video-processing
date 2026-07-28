@@ -232,3 +232,12 @@ Todos esses componentes poderão consumir os mesmos eventos já publicados pela 
 A arquitetura orientada a eventos representa um dos principais pilares da plataforma **FIAP X Video Processing**, atendendo diretamente aos atributos de qualidade definidos neste High Level Design.
 
 As decisões apresentadas neste documento estabelecem a base para o detalhamento dos contratos de eventos, responsabilidades dos microsserviços e estratégias de processamento descritas posteriormente no Low Level Design.
+
+---
+
+# Diagramas Relacionados
+
+- [Catálogo de eventos](../diagrams/event-catalog.md) - envelope, tópicos/filas, payloads
+- [Sequência - Upload](../diagrams/sequence-upload.md)
+- [Sequência - Processamento](../diagrams/sequence-processing.md)
+- [Sequência - Notificação](../diagrams/sequence-notification.md)

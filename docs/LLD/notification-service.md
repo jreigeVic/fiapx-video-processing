@@ -244,3 +244,7 @@ sequenceDiagram
 ## Consideracoes
 
 Este LLD documenta o Notification Service como microsservico, conforme o escopo da TASK-001 e os containers definidos no HLD.
+
+## Diagramas Relacionados
+
+- [Sequência - Notificação](../diagrams/sequence-notification.md)

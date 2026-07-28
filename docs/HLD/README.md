@@ -37,6 +37,8 @@ Esta documentação serve como referência para:
 | 14-ci-cd | Estratégia de CI/CD |
 | 15-decision-summary | Resumo das decisões arquiteturais |
 
+Diagramas visuais (Mermaid) complementando estes documentos - componentes, sequência, modelo de dados, catálogo de eventos, deployment - estão em [`docs/diagrams/`](../diagrams/), linkados a partir da seção do HLD a que pertencem.
+
 ---
 
 # Relação com o LLD
