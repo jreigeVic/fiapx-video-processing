@@ -5,8 +5,11 @@ import com.fiapx.processing.application.ports.out.VideoProcessorPort;
 import com.fiapx.processing.domain.exception.ProcessingFailedException;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -68,8 +71,20 @@ public class FfmpegVideoProcessorAdapter implements VideoProcessorPort {
         }
     }
 
+    // The default temp directory (e.g. /tmp) is world-writable on most systems;
+    // restricting the new directory to owner-only access prevents other local
+    // users/processes from reading or tampering with the frames while ffmpeg
+    // runs (SonarCloud java:S5443). Falls back to the default permissions on
+    // non-POSIX filesystems (e.g. a developer running this outside Docker on
+    // Windows), where this hardening doesn't apply the same way.
     private Path createFramesDirectory() {
         try {
+            if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+                FileAttribute<?> ownerOnly =
+                        PosixFilePermissions.asFileAttribute(
+                                PosixFilePermissions.fromString("rwx------"));
+                return Files.createTempDirectory("fiapx-frames-", ownerOnly);
+            }
             return Files.createTempDirectory("fiapx-frames-");
         } catch (IOException e) {
             throw new ProcessingFailedException(PROCESSING_ERROR, e);

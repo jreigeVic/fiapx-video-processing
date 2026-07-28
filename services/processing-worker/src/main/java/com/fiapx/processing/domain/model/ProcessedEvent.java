@@ -15,7 +15,7 @@ public final class ProcessedEvent {
         this.processedAt = processedAt;
     }
 
-    public static ProcessedEvent record(UUID eventId, String eventType) {
+    public static ProcessedEvent create(UUID eventId, String eventType) {
         return new ProcessedEvent(eventId, eventType, Instant.now());
     }
 

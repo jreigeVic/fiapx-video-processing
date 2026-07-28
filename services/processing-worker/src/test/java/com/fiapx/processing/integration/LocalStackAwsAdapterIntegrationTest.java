@@ -1,7 +1,6 @@
 package com.fiapx.processing.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -219,11 +218,11 @@ class LocalStackAwsAdapterIntegrationTest {
 
         verify(processUploadedVideoUseCase)
                 .execute(
-                        eq(eventId),
-                        eq(videoId),
-                        eq(ownerUserId),
-                        eq("owner@test.com"),
-                        eq(StorageObjectKey.of("videos/original/x.mp4")));
+                        eventId,
+                        videoId,
+                        ownerUserId,
+                        "owner@test.com",
+                        StorageObjectKey.of("videos/original/x.mp4"));
     }
 
     private String queueArn(String queueUrl) {

@@ -98,10 +98,14 @@ class HexagonalArchitectureTest {
     // "Configuration" is the Spring composition root: it wires concrete
     // adapters to ports, so it is allowed to see every layer, but no layer
     // is allowed to depend back on it.
+    // withOptionalLayers(true): processing-worker has no HTTP controllers (it's
+    // an SQS-only worker, see docs/LLD/processing-worker.md), so the "Api"
+    // layer is legitimately empty - not an architecture violation to flag.
     @ArchTest
     static final ArchRule dependencies_should_point_inward =
             layeredArchitecture()
                     .consideringOnlyDependenciesInLayers()
+                    .withOptionalLayers(true)
                     .layer("Domain")
                     .definedBy("..domain..")
                     .layer("Application")

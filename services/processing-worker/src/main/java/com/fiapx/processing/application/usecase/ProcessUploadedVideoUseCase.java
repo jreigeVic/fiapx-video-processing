@@ -83,7 +83,7 @@ public class ProcessUploadedVideoUseCase implements ProcessUploadedVideoPort {
             deleteQuietly(zipFile);
         }
 
-        idempotencyPort.save(ProcessedEvent.record(eventId, "VideoUploaded"));
+        idempotencyPort.save(ProcessedEvent.create(eventId, "VideoUploaded"));
     }
 
     private void deleteQuietly(Path path) {

@@ -45,7 +45,7 @@ class JpaIdempotencyAdapterIntegrationTest {
 
         assertThat(idempotencyPort.existsByEventId(eventId)).isFalse();
 
-        idempotencyPort.save(ProcessedEvent.record(eventId, "VideoUploaded"));
+        idempotencyPort.save(ProcessedEvent.create(eventId, "VideoUploaded"));
 
         assertThat(idempotencyPort.existsByEventId(eventId)).isTrue();
     }
