@@ -20,7 +20,7 @@ Antes de abrir um PR, confira sua mudança contra o [`docs/development/definitio
 
 ## 4. Trabalhando com IA
 
-Este repositório segue um fluxo de engenharia AI-first. Se você está usando Claude Code ou um assistente similar, ele deve ler o `CLAUDE.md` primeiro — que define o contrato operacional (tarefa → contexto → plano → aprovação → implementação → testes → resumo) seguido pelas mudanças assistidas por IA neste repositório. O `CLAUDE.md` hoje vive um diretório acima deste repositório, junto do repositório complementar `ai_os`, em vez de dentro do `fiapx-video-processing`.
+Este repositório segue um fluxo de engenharia AI-first. Se você está usando um assistente de codificação por IA, ele deve ler o `CLAUDE.md` primeiro — que define o contrato operacional (tarefa → contexto → plano → aprovação → implementação → testes → resumo) seguido pelas mudanças assistidas por IA neste repositório. O `CLAUDE.md` hoje vive um diretório acima deste repositório, junto do repositório complementar `ai_os`, em vez de dentro do `fiapx-video-processing`.
 
 ## 5. Abra um Pull Request
 
