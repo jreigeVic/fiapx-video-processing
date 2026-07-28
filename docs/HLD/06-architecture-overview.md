@@ -216,3 +216,12 @@ As decisões apresentadas neste documento são detalhadas nas próximas seções
 - Estratégia de Escalabilidade.
 
 Além disso, cada decisão arquitetural possui rastreabilidade para suas respectivas ADRs e para os documentos de Low Level Design dos microsserviços.
+
+---
+
+# Diagramas Relacionados
+
+- [Componentes - Identity Service](../diagrams/component-identity.md)
+- [Componentes - Video Service](../diagrams/component-video.md)
+- [Componentes - Processing Worker](../diagrams/component-processing.md)
+- [Modelo de dados](../diagrams/database-model.md)

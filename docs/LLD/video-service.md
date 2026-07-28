@@ -298,3 +298,9 @@ sequenceDiagram
 ## Consideracoes
 
 O Video Service e o unico proprietario do dominio Video. O Processing Worker nunca atualiza o video_db diretamente.
+
+## Diagramas Relacionados
+
+- [Componentes - Video Service](../diagrams/component-video.md)
+- [Sequência - Upload](../diagrams/sequence-upload.md)
+- [Modelo de dados](../diagrams/database-model.md)

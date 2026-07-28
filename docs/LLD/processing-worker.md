@@ -253,3 +253,8 @@ sequenceDiagram
 ## Consideracoes
 
 O Processing Worker nunca atualiza diretamente o banco do Video Service. O resultado do processamento sempre retorna ao dominio Video por eventos.
+
+## Diagramas Relacionados
+
+- [Componentes - Processing Worker](../diagrams/component-processing.md)
+- [Sequência - Processamento](../diagrams/sequence-processing.md)

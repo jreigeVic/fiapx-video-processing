@@ -195,3 +195,11 @@ Como consequência:
 Este documento apresenta apenas a organização lógica da plataforma.
 
 Os detalhes do fluxo de comunicação baseado em eventos serão apresentados na próxima seção do High Level Design.
+
+---
+
+# Diagramas Relacionados
+
+- [Componentes - Identity Service](../diagrams/component-identity.md)
+- [Componentes - Video Service](../diagrams/component-video.md)
+- [Componentes - Processing Worker](../diagrams/component-processing.md)

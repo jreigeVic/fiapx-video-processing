@@ -1,8 +1,8 @@
 # Fundação de CI/CD
 
-Este documento descreve o pipeline de Integração Contínua que valida cada Pull Request antes do merge, conforme ADR-010.
+Este documento descreve o pipeline de Integração Contínua (`.github/workflows/ci.yml`) que valida cada Pull Request antes do merge, conforme ADR-010.
 
-Nenhum deployment é realizado por este pipeline. CD, deployment em Kubernetes, provisionamento AWS, Terraform e automação de release estão explicitamente fora do escopo e ficam para uma tarefa futura.
+Nenhum deployment é realizado por este pipeline especificamente — build, testes e análise de qualidade, só isso. O CD (`.github/workflows/cd.yml`: build+push de imagem para o ECR e deploy via Helm no EKS) existe como um pipeline separado, documentado em [`infrastructure/helm/README.md`](../../infrastructure/helm/README.md).
 
 ---
 
@@ -91,14 +91,12 @@ A regra genérica `.*` adicionada ao `.gitignore` em uma tarefa anterior (para o
 
 ---
 
-## Defeitos Pré-Existentes Conhecidos Revelados por Este Pipeline (Não Corrigidos)
+## Defeitos Pré-Existentes Conhecidos Revelados por Este Pipeline — Resolvidos
 
-Executar o pipeline localmente contra uma instância real do PostgreSQL 16 (a provisionada na TASK-002.3) revelou dois defeitos pré-existentes em nível de aplicação, deliberadamente **não** corrigidos aqui — eles estão fora do escopo de "fundação de CI/CD" e requerem uma decisão em nível de aplicação, não de ferramental de build:
+Executar o pipeline localmente contra uma instância real do PostgreSQL 16 (a provisionada na TASK-002.3) revelou dois defeitos pré-existentes em nível de aplicação, na época deliberadamente não corrigidos como parte da "fundação de CI/CD" por exigirem decisão em nível de aplicação, não de ferramental de build. Ambos foram fechados nos epics de implementação de cada serviço (ver `pendencies.md`, seção "Service Dependencies — Resolved 2026-07-18"):
 
-- **O teste do `video-service` falha contra o PostgreSQL real** — seu `ApplicationUnitTest` não possui `@ActiveProfiles("test")` (diferente do `identity-service`, que possui e usa um perfil de teste H2 em memória), então ele carrega o datasource padrão do `application.yml` e atinge uma conexão real Flyway/PostgreSQL 16. Ele falha com `FlywayException: Unsupported Database: PostgreSQL 16.14`, o que muito provavelmente significa que o módulo `org.flywaydb:flyway-database-postgresql` (exigido pelo Flyway 10.x para suporte ao PostgreSQL) está ausente nas dependências do `video-service`.
-- **O `notification-service` está sem o driver JDBC do PostgreSQL** — ele configura um `spring.datasource.url` e habilita o Flyway no `application.yml`, mas seu `build.gradle.kts` nunca declara `org.postgresql:postgresql`. Seu teste atualmente passa apenas porque, sem um driver, o Spring Boot não consegue construir um bean `DataSource`, então a auto-configuração do Flyway silenciosamente nunca é ativada — o serviço não consegue de fato se conectar ao seu banco de dados em um deployment real.
-
-Recomenda-se uma tarefa de acompanhamento para decidir a estratégia de banco de dados de teste (H2 vs. Testcontainers vs. Postgres real) e para fechar as lacunas de dependências ausentes.
+- **`video-service`**: `ApplicationUnitTest` ganhou `@ActiveProfiles("test")` (perfil H2 em memória, igual ao `identity-service`), resolvendo o `FlywayException: Unsupported Database: PostgreSQL 16.14` que ocorria ao carregar o datasource padrão em teste.
+- **`notification-service`**: `build.gradle.kts` passou a declarar `spring-boot-starter-data-jpa`, `org.postgresql:postgresql` e `flyway-database-postgresql`, fechando a lacuna que impedia o serviço de conectar ao seu banco em um deployment real.
 
 ---
 
@@ -149,11 +147,8 @@ Nenhum secret de AWS, ECR ou New Relic é necessário para este workflow — nen
 
 ---
 
-## Fora do Escopo
+## Fora do Escopo (deste workflow especificamente)
 
-- Continuous Deployment.
-- Deployment em Kubernetes.
-- Provisionamento de infraestrutura AWS.
-- Terraform.
+- Continuous Deployment, deployment em Kubernetes, provisionamento de infraestrutura AWS e Terraform — cobertos pelo CD (`.github/workflows/cd.yml`), documentado em [`infrastructure/helm/README.md`](../../infrastructure/helm/README.md).
 - Automação de release.
-- Envio (push) de imagens para um registry (aqui é apenas build, para fins de scan; o push para o ECR é responsabilidade do CD - `.github/workflows/cd.yml`).
+- Envio (push) de imagens para um registry (aqui é apenas build, para fins de scan; o push para o ECR é responsabilidade do CD).

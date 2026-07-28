@@ -4,6 +4,11 @@
 .terraform/
 crash.log
 
+# Saved plans are tied to a point-in-time state and go stale immediately in
+# this lab (AWS Academy sessions rotate credentials/resources); never commit
+# one, always regenerate before applying.
+*.tfplan
+
 # Real variable values (emails); only the example is committed
 *.tfvars
 !*.tfvars.example

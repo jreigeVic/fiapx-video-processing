@@ -275,3 +275,8 @@ sequenceDiagram
 ## Consideracoes
 
 Refresh Token e Logout fazem parte do escopo obrigatorio deste LLD (ver ADR-013). Escopo minimo: rotacao de refresh token a cada uso e revogacao individual via logout. Revogacao em massa de sessoes, listagem de sessoes ativas e blacklist de access token estao fora de escopo.
+
+## Diagramas Relacionados
+
+- [Componentes - Identity Service](../diagrams/component-identity.md)
+- [Modelo de dados](../diagrams/database-model.md)
