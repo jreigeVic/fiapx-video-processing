@@ -2,7 +2,9 @@
 
 Este documento descreve como iniciar a infraestrutura local necessária para desenvolver a FIAP X Video Processing Platform.
 
-Ele cobre apenas a infraestrutura local. CI/CD, Kubernetes, Terraform, provisionamento de infraestrutura AWS ou implementação de microsserviços não são descritos aqui.
+Ele cobre apenas a infraestrutura local (Postgres/LocalStack). CI/CD, Kubernetes, Terraform e provisionamento de infraestrutura AWS não são descritos aqui.
+
+> **Nota de atualização:** desde as epics de implementação dos 4 serviços, o mesmo `docker-compose.yml` também declara `identity-service`, `video-service`, `processing-worker` e `notification-service` como containers (build a partir do `Dockerfile` de cada um) - um único `docker compose up -d --build` sobe a stack inteira, e não é mais necessário rodar cada serviço manualmente via Gradle/IDE contra este Compose. As seções abaixo descrevem só as duas peças de infraestrutura compartilhada; o comportamento dos 4 serviços entre si é o mesmo descrito no restante da documentação.
 
 ---
 
@@ -13,7 +15,7 @@ O Docker Compose provisiona as duas dependências de infraestrutura compartilhad
 - **PostgreSQL** — banco de dados relacional (um banco de dados lógico por serviço, conforme ADR-004 e ADR-007).
 - **LocalStack** — emulação local dos serviços AWS utilizados pela plataforma: S3, SNS e SQS (conforme ADR-002 e ADR-006).
 
-Os próprios microsserviços (`identity-service`, `video-service`, `processing-worker`, `notification-service`) **não** são iniciados por este arquivo Docker Compose. Execute-os individualmente (Gradle ou sua IDE) contra os containers iniciados aqui.
+Os 4 microsserviços (`identity-service`, `video-service`, `processing-worker`, `notification-service`) também são iniciados pelo mesmo `docker compose up` (ver nota acima) - esta seção documenta só as duas peças de infraestrutura compartilhada.
 
 ---
 

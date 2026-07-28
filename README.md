@@ -112,10 +112,16 @@ Pré-requisito: Docker Desktop instalado e em execução.
 
 ```bash
 cp .env.example .env
-docker compose up -d
+docker compose up -d --build
 ```
 
-Isso sobe **PostgreSQL** e **LocalStack** (S3/SNS/SQS emulados). Depois, rode cada microsserviço individualmente (Gradle ou sua IDE) contra esses containers. Guia completo em [`docs/setup/local-development.md`](docs/setup/local-development.md).
+Isso sobe a stack **completa**: PostgreSQL, LocalStack (S3/SNS/SQS emulados) e os **4 microsserviços** (`identity-service:8081`, `video-service:8082`, `processing-worker:8083`, `notification-service:8084`), cada um construído a partir do seu próprio `Dockerfile`. Confirme que todos os 6 containers ficaram `healthy`:
+
+```bash
+docker compose ps
+```
+
+Guia de infraestrutura local (Postgres/LocalStack) em [`docs/setup/local-development.md`](docs/setup/local-development.md).
 
 ## 📖 Documentação
 
