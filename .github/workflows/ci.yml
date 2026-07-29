@@ -212,6 +212,7 @@ jobs:
 
       - name: OWASP Dependency-Check (report only)
         if: env.NVD_API_KEY != ''
+        timeout-minutes: 20
         working-directory: services/${{ matrix.service }}
         run: $GRADLE_CMD dependencyCheckAnalyze
 
