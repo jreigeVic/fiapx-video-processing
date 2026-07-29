@@ -6,6 +6,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
@@ -13,8 +14,13 @@ import com.tngtech.archunit.lang.ArchRule;
 /**
  * Enforces the Hexagonal Architecture boundaries described in docs/LLD/shared-architecture.md and
  * docs/LLD/processing-worker.md. Fails the build (via the normal {@code test} task) on violation.
+ * Test classes are excluded from the scan - these rules constrain production wiring, not test
+ * helpers that happen to share a package with the adapter they cover (e.g. package-private-method
+ * tests).
  */
-@AnalyzeClasses(packages = "com.fiapx.processing")
+@AnalyzeClasses(
+        packages = "com.fiapx.processing",
+        importOptions = ImportOption.DoNotIncludeTests.class)
 class HexagonalArchitectureTest {
 
     @ArchTest

@@ -77,7 +77,9 @@ public class FfmpegVideoProcessorAdapter implements VideoProcessorPort {
     // runs (SonarCloud java:S5443). Falls back to the default permissions on
     // non-POSIX filesystems (e.g. a developer running this outside Docker on
     // Windows), where this hardening doesn't apply the same way.
-    private Path createFramesDirectory() {
+    // Package-private (rather than private) so the test can call it directly -
+    // PMD's AvoidAccessibilityAlteration rule forbids reflection's setAccessible().
+    Path createFramesDirectory() {
         try {
             if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
                 FileAttribute<?> ownerOnly =
